@@ -148,11 +148,13 @@ library(sandwich) # Pour les erreurs standard robustes
 library(tidyverse)
 library(FactoMineR)
 
+getwd()
+setwd("/home/mas/Bureau/MAS 1/S7/econometrie/projet/ANG-LE")
 ```
 
 ```{r echo=FALSE, include=FALSE}
 # Importation et vérification
-nasdaq <- read_excel("donnees/Econometrie.xlsx")
+nasdaq <- read_excel("Econometrie.xlsx")
 View(nasdaq)
 
 sum(is.na(nasdaq)) # Vérifier qu'il n'y a pas de "NA" dans la base
