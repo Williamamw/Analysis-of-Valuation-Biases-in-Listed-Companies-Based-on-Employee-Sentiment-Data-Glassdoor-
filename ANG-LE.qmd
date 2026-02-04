@@ -1,0 +1,680 @@
+---
+title: "Analyse des Biais de Valorisation des Entreprises Cotées basée sur les Données de Sentiment des Employés (Glassdoor)"  
+date: "`r Sys.Date()`"
+output:
+  rmdformats::robobook:
+    highlight: kate
+    number_sections: TRUE
+    df_print: paged
+---
+
+**ANG Ming Wei 22408338, LE Ba Minh 22508769**
+
+[**Master 1 MAS - Université Rennes 2**](https://formations.univ-rennes2.fr/fr/formations/master-37/master-mention-mathematiques-appliquees-statistique-parcours-sciences-des-donnees-intelligence-artificielle-JFTJBMKM.html)
+
+Ce rapport est aider par l'IA generative, en tant qu'étudiants internationaux, bien que nous maîtrisions les concepts économétriques du cours, l'expression écrite académique en français représente parfois un défi pour nous. Par conséquent, nous avons utilisé des outils d'IA générative strictement comme aide à la correction linguistique.
+
+Ces outils nous ont permis de corriger les erreurs grammaticales et orthographiques, améliorer la syntaxe et la fluidité de nos phrases pour rendre la lecture plus agréable et nous assurer que le vocabulaire technique utilisé était précis et approprié.
+
+# Introduction
+
+### Titre du Projet : Analyse des Biais de Valorisation des Entreprises Cotées basée sur les Données de Sentiment des Employés (Glassdoor)
+
+#### - Contexte et problématique
+
+Dans l'économie actuelle, dominée par le secteur technologique, la valeur d'une entreprise réside de moins en moins dans ses actifs tangibles (usines, stocks) et de plus en plus dans ses actifs intangibles, en particulier son capital human. Pourtant, les modèles de valorisation financière traditionnels se basent presque exclusivement sur des données comptables rétrospectives (Chiffre d'affaires, Dette, Bénéfice).
+
+Cela crée une asymétrie d'information : la "santé culturelle" d'une entreprise est souvent invisible dans les bilans. Le défi est donc de quantifier cette variable "soft". Avec l'essor des plateformes comme Glassdoor, nous avons désormais accès à des données massives sur la satisfaction des employés.
+
+**Problématique :**
+
+> *Dans quelle mesure les données alternatives de sentiment des employés permettent-elles d'expliquer les écarts de valorisation boursière (Ratio P/E) des entreprises du Nasdaq 100, au-delà des fondamentaux financiers classiques ?*
+
+#### - Motivation et intérêt du sujet
+
+Nous avons choisi ce sujet pour deux raisons principales :
+
+1.  **Les Données Alternatives :** Au lieu de reproduire un modèle financier standard, nous souhaitons explorer l'utilisation de l'alternative date.
+
+2.  **La Continuité Pédagogique :** Ce travail sur les notes chiffrées constitue la première étape d'une recherche plus large. Il servira de fondation pour nos futurs travaux en M2.
+
+#### - Questions de recherche ou hypothèses
+
+Nous utilisons le terme 'Biais de Valorisation' pour désigner l'écart entre la valeur théorique d'une entreprise basée uniquement sur ses états financiers (croissance trimestrielle du chiffre d'affaires, marge bénéficiaire nette) et sa valeur réelle sur le marché.
+
+Notre hypothèse est que cet ce biais n'est pas aléatoire, mais qu'il capture des actifs intangibles comme le capital humain. Le sentiment des employés agit donc comme une source de prime ou de décote sur le ratio P/E.
+
+Dans notre projet, nous testerons de chercher des rélations entre une note globale Glassdoor et la valorisation d'entreprise. Deuxièment, Est-ce que la confiance envers le PDG (CEO_Approval) et la présence d'un fondateur aux commandes (Founder_CEO) agissent comme des catalyseurs de valorisation ? Et même en contrôlant rigoureusement la croissance et la rentabilité (Revenue_Growth, Net_Margin), est-ce que le facteur humain conserve un pouvoir explicatif statistiquement significatif?
+
+#### - Objectifs et contributions du mémoire
+
+Dans le domaine de la finance quantitative, le concept d'alpha est omniprésent, et l'on accorde une importance primordiale à la recherche d'un alpha de qualité afin d'optimiser le ratio de Sharpe. Dans ce rapport, nous allons constituer manuellement et via R un jeu de données unique combinant des métriques RH (Sentiment, Recommandation, Licenciements) et des données de marché pour les composants du Nasdaq 100.
+
+Ensuite, nous tentons d'isoler l'alpha généré par le capital humain à l'aide d'une régression linéaire multiple simple, tout en accordant une attention particulière aux tests de robustesse.
+
+Nous consiste à démontrer si le marché est "efficient" par rapport à l'information sociale, ou s'il sous-estime systématiquement les entreprises ayant une mauvaise culture interne.
+
+#### - Indiquer votre plan
+
+Notre analyse s'articulera autour des quatre parties suivantes :
+
+**I. Revue de Littérature :**
+
+Synthèse des travaux existants sur le lien entre satisfaction des employés et performance boursière.
+
+**II. Données et Méthodologie :**
+
+Description de l'échantillon (Nasdaq 100) et des sources (Glassdoor, TradingView).
+
+Définition des variables (6 quantitatives, 2 qualitatives).
+
+Statistiques descriptives et matrice de corrélation.
+
+**III. Résultats Empiriques :**
+
+Présentation du modèle de régression.
+
+Interprétation des coefficients et de leur significativité.
+
+Tests de diagnostic.
+
+**IV. Conclusion :**
+
+Synthèse des rapports, conclusion statistique et notre point de vue.
+
+# Cadre méthodologique
+
+-   Nous utilisons un modèle de régression linéaire multiple estimé par la méthode des Moindres Carrés Ordinaire (MCO). L'objectif est 'expliquer la variation du ratio P/E par des variables opinion des employés et des variables de contrôle financières. $$
+    \begin{aligned}
+    PE\_Ratio_i &= \beta_0 + \beta_1 Glassdoor\_Rating_i + \beta_2 CEO\_Approval_i + \beta_3 Rec\_Friend_i \\
+    &+ \beta_4 Rev\_Growth_i + \beta_5 Net\_Margin_i + \beta_6 Market\_Cap_i \\
+    &+ \beta_7 Founder\_CEO_i + \beta_8 Has\_Layoff_i + \varepsilon_i
+    \end{aligned}
+    $$
+
+-   Nous analysons les entreprises à un instant t précis, car nous cherchons à comparer les valorisations relatives entre entreprise et non leur évolution temporelle.
+
+# **Analyse des données**
+
+## Cadre des données
+
+*Période :* Les données ont été collectées en novembre 2025
+
+*Secteur géographique :* Étas-Unis (Marché boursier américain)
+
+*Individus :* Notre échantillon est composé de 90 entreprises contées appartenant à l'indice Nasdaq 100, représentant pricinpalement le secteur technologique et de croissance.
+
+| Code de la série | Définition | Unité | Source |
+|:-----------------|------------------|:----------------:|-----------------:|
+| PE_Ratio | Ratio Cours/Bénéfice | Nombre | TradingView |
+| Glassdoor_Rating | Note Globale de l'entreprise par les employés | 1 à 5 | Glassdoor |
+| CEO_Approval | Taux d'approbation du PDG | (0-1)% | Glassdoor |
+| Recommend_Friend | Pourcentage recommandant l'entreprise à un ami | (0-1)% | Glassdoor |
+| Revenue_Growth | Croissance trimestrielle du chiffre d'affaires | (0-1)% | Glassdoor |
+| Net_Margin | Marge bénéficiaire nette | (0-1)% | TradingView |
+| Market_Cap | Capitalisation boursière | Milliard \$ | TradingView |
+| Founder_CEO | Variable muette : 1 si le PDG est fondateur, 0 sinon | Binaire (0/1) | wikipedia / nouvelles |
+| Has_Layoff | Variable muette : 1 si licencements récents, 0 sinon | Binaire (0/1) | trueup / nouvelles |
+
+## Prétraitement et nettoyage des données
+
+Ce projet repose sur une base de données propriétaire, construite manuellement par nos soins à partir de plusieurs sources principales : TradingView pour les métriques financières et Glassdoor pour les indicateurs de sentiment social.
+
+Notre approche de collecte manuelle ciblée sur les composantes du Nasdaq 100 nous a permis d'effectuer un contrôle qualité en amont de l'analyse.
+
+Au stade de la collecte, nous avons constaté que certaines entreprises n'affichent pas de ratio cours/bénéfice (P/E Ratio). Cela s'explique mathématiquement par un bénéfice par action (EPS) négatif. Lorsqu'une entreprise enregistre des pertes, le ratio P/E n'est pas calculable ou est considéré comme non pertinent. Nous avons identifié deux causes économiques principales à ce phénomène :
+
+**1. La stratégie d'hyper-croissance (Investissements R&D) :** Certaines entreprises, notamment dans les secteurs de la biotechnologie ou des véhicules électriques, investissent massivement en Recherche & Développement pour capturer des parts de marché futures. Leurs dépenses dépassent leurs revenus actuels, entraînant des pertes comptables temporaires.
+
+**2. Les charges de restructuration et coûts exceptionnels :** Des entreprises matures peuvent subir une chute brutale de leur résultat net, le faisant passer en territoire négatif, à cause de charges ponctuelles massives telles que des coûts de licenciement, des fermetures d'usines ou des dépréciations d'actifs (Impairment charges), rendant son ratio P/E soit inexistant, soit artificiellement élevé.
+
+-   **Exemple : Intel (INTC)**. Récemment, Intel a vu ses bénéfices comptables s'effondrer en raison des coûts liés à son plan de redressement massif (licenciements, construction d'usines), ce qui a entraîné un ratio P/E inhabituellement élevé dans ces circonstances.
+
+------------------------------------------------------------------------
+
+Grâce à ce processus de sélection, notre base de données ne nécessite pas de traitements nettoyage. Nous avons exclu dès la phase de collecte les entreprises pour lesquelles les informations manqauntes et les variables qualitatifs, telles que la présence d'un PDG fondateur (Founder_CEO) ou l'historique de licenciements (Has_Layoffs), ont été directement codées de manière binaire (0 ou 1) lors de la saisie.
+
+```{r echo=FALSE, include=FALSE, warning=FALSE, message=FALSE}
+# Chargement des packages nécessaires et environnement de travail
+###library
+library(readxl) #Lire des données
+library(ggplot2) #Afficher les graphiques
+library(stargazer) #Afficher les tableaux
+library(DescTools)
+library(corrplot)  # Pour la matrice de corrélation
+library(car) # Pour le VIF
+library(lmtest) # Pour le test de Breusch-Pagan
+library(sandwich) # Pour les erreurs standard robustes
+library(tidyverse)
+library(FactoMineR)
+
+```
+
+```{r echo=FALSE, include=FALSE}
+# Importation et vérification
+nasdaq <- read_excel("donnees/Econometrie.xlsx")
+View(nasdaq)
+
+sum(is.na(nasdaq)) # Vérifier qu'il n'y a pas de "NA" dans la base
+
+str(nasdaq) # Vérifier les types des données
+
+nasdaq$Founder_CEO_f <- as.factor(nasdaq$Founder_CEO) #Transforme les variables en facteur
+nasdaq$Has_Layoff_f <- as.factor(nasdaq$Has_Layoff)
+
+levels(nasdaq$Has_Layoff_f) #vérification des catégories
+
+# Commentaire : On a vérifié qu'il n'existe pas des valeurs manquantes dans notre base de données et sauf la variable Company et Ticker sont des characters, les autres variables sont numeric. Ensuite, on transforme la variable Founder_CEO et Has_Layoff en facteur car elles sont des variables qualitatifs initialement.
+
+```
+
+## Analyse descriptive univariée des données
+
+#### - Tableau de statistiques descriptives
+
+```{r echo=FALSE, include=FALSE, warning=FALSE, message=FALSE}
+class(nasdaq)
+nasdaq <- as.data.frame(nasdaq)
+class(nasdaq)
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+
+sommaire <- nasdaq[,4:14]
+
+stargazer(sommaire, type = "text", title="Sommaire", digits=2, median = T, iqr=T)
+
+```
+
+##### Commentaire :
+
+En moyenne, le ratio P/E est d'environ 106, mais la médiane est seulement de 32, ce qui indique une distribution extrêmement asymétrique. Il existe aussi une dispersion très importante puisque le minimum est à 4,41 et le maximum est de 3472,64. Et on observe que 75% des entreprises ont un P/E $\le$ 52.38.
+
+Concernant la valeur extrême de 3472,64, il s'agit d'un outlier potentiel ou d'une entreprise dont les bénéfices sont très faibles. À l'inverse, le ratio de 4,41 peut indiquer une entreprise sous-évaluée ou ayant réalisé des bénéfices exceptionnels.
+
+Compte tenu de cette asymétrie et de la présence de ces outliers susceptibles de biaiser la régression linéaire, nous appliquerons la méthode de winsorisation dans la suite de l'analyse pour limiter leur impact.
+
+Dans notre données, la variable de la présence d'un PDG fondateur et de l'historique de licenciements sont des variables qualitatifs OUI/NON, on a donc que 1 et 0 dans le tableau, et on les transfrome en facteur car elles n'ont pas d'ordre numérique ou d'amplitude intrinsèque.
+
+Si nous les traitons comme des variables numériques, le modèle de régression imposerait une fausse relation linéaire. L'utilisation du facteur permet à R de créer des variables fictives, donnant à chaque catégorie son propre coefficient indépendant par rapport à une base de référence.
+
+```{r echo=FALSE, include=FALSE, warning=FALSE, message=FALSE}
+nasdaq <- nasdaq[,-(11:12)]
+
+# compter le nombre d'individus de chacune des catégories
+FCEO_nomb <- table(nasdaq$Founder_CEO_f)
+FHL_nomb <- table(nasdaq$Has_Layoff_f)
+
+FCEO_nomb
+# la proportion de chacune des catégories
+prop.table(FCEO_nomb)
+prop.table(FHL_nomb)
+
+### Commentaire :
+# 
+# Dans notre échantillon, il y a 82,22% de l'inidividus qui n'ont pas le même PDG que son foundateur
+# 
+# Dans notre échantillon, il y a 76,67% de l'inidividus qui n'ont pas licenements recement
+```
+
+```{r echo=FALSE, include=FALSE, warning=FALSE, message=FALSE}
+#tableau de statistiques descriptives en fonction des membres  
+tapply(nasdaq$PE_Ratio, nasdaq$Has_Layoff_f, summary)
+tapply(nasdaq$PE_Ratio, nasdaq$Founder_CEO_f, summary)
+```
+
+#### - Histogramme
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+
+#pour les histogrammes
+ggplot(nasdaq, aes(x=Glassdoor_Rating)) +  geom_histogram(binwidth=0.2, color="white") + ggtitle("Graphique 1: Histogramme de la Note Globale de L'Entreprise par Les Employés") + xlab("Note Globale (1-5)") + ylab("Nombre d'entreprises") 
+```
+
+##### Commentaire:
+
+Le graphique 1 illustre la distribution des notes globales est unimodale avec un pic situé autour de 3.9 - 4.0. Cela indique que la majorité des entreprises de notre échantillon sont perçues positivement par leurs employés et nous observons une variabilité suffisante pour notre modèle, avec des notes s'étendant d'environ 2.5 à 4.5.
+
+#### - Box plot
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+qui <- subset(nasdaq,CEO_Approval<0.3)
+
+# Boxplot du taux d'approbation du PDG
+ggplot(nasdaq, aes(x=0, y=CEO_Approval)) + 
+  geom_text(data=qui, aes(label=Company)) +
+    geom_boxplot(outlier.colour = "red") +
+    ggtitle("Graphique 2: Boxplot du Taux d'Approbation du PDG") +
+    xlab("") +
+    ylab("Taux d'approbation (0-1)")
+    
+```
+
+##### Commentaire:
+
+Le graphique 2 présente la médiane se situe aux alentours de 0.80. Cela confirme que la majorité des PDG du Nasdaq 100 bénéficient d'un fort soutien de leurs employés.
+
+La boîte est relativement compacte, s'étendant d'environ 0.62 à 0.85. Cela indique une homogénéité dans les entreprises performantes, il est rare d'avoir un PDG impopulaire dans le Nasdaq 100.
+
+Nous observons un point isolé en bas du graphique situé vers 0.30. Ce point représente une anomalie et correspond à la l'entreprise American Electric Power. Il s'agit d'une entreprise où le PDG est extrêmement impopulaire par rapport à ses pairs. C'est un cas intéressant pour notre modèle : cette impopularité se traduit-elle par une pénalité sur le cours de bourse ?
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+GE <- subset(nasdaq,Market_Cap>420)
+
+ggplot(nasdaq, aes(x=0,y=Market_Cap)) +
+    geom_boxplot(outlier.colour = "red") + geom_text(data=GE, aes(label=Company)) +
+    ggtitle("Graphique 3: Boxplot de la Capitalisation boursière") +
+    xlab("") +
+    ylab("Capitalisation boursière")
+
+```
+
+##### Commentaire:
+
+Le graphique 3 met en évidence une asymétrie majeure dans la taille des entreprises de notre échantillon. La boîte est écrasée vers le bas de l'axe, tandis que les valeurs aberrantes (points rouges) s'étendent verticalement jusqu'à des niveaux extrêmes.
+
+Les points rouges représentent les géants de la technologie (comme Nvidia, Apple, Alphabet, etc) dont la capitalisation est sans commune mesure avec la médiane du reste de l'échantillon.
+
+Une telle distribution pose problème pour une régression linéaire standard, car ces valeurs extrêmes risquent de biaiser les coefficients. Cette observation justifie notre choix méthodologique de transformer cette variable en logarithme naturel ($ln$$($Market_Cap$)$) pour normaliser la distribution et réduire l'impact des effets d'échelle.
+
+## Analyse descriptive bivariée des données
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+# Corrélations simples et affichage graphique (base R)
+vars <- names(nasdaq[,5:10])
+
+cors <- sapply(vars, function(v) cor(nasdaq$PE_Ratio, nasdaq[[v]]))
+
+par(mar = c(5, 10, 5, 10))
+
+barplot(cors,
+        horiz = T,
+        las = 1,
+        xlab = "Coefficient de corrélation avec PE_Ratio",
+        main = "Graphique 4: Corrélations des variables explicatives avec le ratio P/E",
+        xlim = c(-1, 1))
+```
+
+##### Commentaire:
+
+Le graphique 4 révèle des corrélations contre-intuitives. Par exemple, la marge nette montrent une corrélation négative avec le ratio P/E, ce qui contredit la théorie financière standard, les entreprises plus rentables devraient logiquement avoir une valorisation plus élevée.
+
+De plus, les corrélations globales sont très faibles. Ce phénomène s'explique par la sensibilité extrême du coefficient de corrélation de Pearson aux outliers. Comme identifié dans notre analyse descriptive précédente, la présence d'entreprises avec un ratio P/E aberrant "écrase" la relation linéaire pour le reste de l'échantillon.
+
+Les données brutes ne sont pas fiables pour une régression linéaire. Pour corriger ce biais et obtenir des résultats robustes, il est indispensable d'appliquer une méthode de Winsorisation sur le ratio P/E avant de procéder à la modélisation économétrique.
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+# Tracé des graphes de points et de la linéarité
+
+ggplot(nasdaq, aes(x=Recommend_Friend, y=Revenue_Growth)) +
+    geom_point() +
+    ggtitle("Graphique 5: Nuage de Point - Relation entre la recommandation des employés et la croissnace du chiffre d'affaires") +
+    geom_smooth(method=lm, color="red", fill="#69b3a2", se=TRUE) +
+    labs(x="Recommendation Ami", y="Croissance trimestrielle du chiffre d'affaires")
+
+```
+
+##### Commentaire:
+
+Le graphique 5 montre que la droite de régression présente ici une pente positive.
+
+Cela suggère qu'une satisfaction élevée des employés est corrélée à une dynamique de croissance plus forte. Ce résultat valide l'hypothèse selon laquelle un climat social sain favorise la productivité et, par extension, l'expansion de l'activité.
+
+On observe une dispersion des points autour de la droite, ce qui indique que si le moral des employés est un facteur contributif, la croissance reste influencée par des variables macroéconomiques et sectorielles externes. La zone grisée (intervalle de confiance) est relativement étroite, ce qui renforce la crédibilité de cette tendance positive pour l'échantillon du Nasdaq 100.
+
+#### 
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+# Exclure la variable dépendante PE_Ratio (première colonne)
+corrplot(cor(nasdaq[,5:10]),
+         method = "shade",
+         type = "lower",
+         title = "Graphique 6: Matrice de corrélation entre les variables explicatives",
+         mar = c(0,0,1,0),
+         addCoef.col = "black"
+         )
+
+```
+
+##### Commentaire:
+
+Dans le graphique 6, l'élément le plus frappant est la corrélation extrêmement élevée entre les trois variables de sentiment : Pourcentage recommandant l'entreprise à un ami et Note Globale de l'entreprise (0,87), Pourcentage recommandant l'entreprise à un ami et Taux d'approbation du PDG (0,83), Note Globale de l'entreprise et Taux d'approbation du PDG (0,79). Ces scores indiquent que ces variables capturent une dimension quasi identique du capital humain. L'inclusion simultanée de ces variables dans un même modèle présente un risque majeur de multicolinéarité, ce qui pourrait gonfler les variances des estimateurs et rendre les coefficients peu fiables.
+
+Faible corrélation entre sentiment et performance financière, les coefficients entre les indicateurs Glassdoor et les variables financières (Revenue_Growth, Net_Margin, Market_Cap) sont relativement faibles, s'échelonnant entre 0,05 et 0,31. Parmi ceux-ci, la corrélation entre la marge nette et les indicateurs de sentiment est légèrement supérieure à celle observée pour la croissance du chiffre d'affaires ou la capitalisation boursière. Cela pourrait suggérer que les entreprises très rentables offrent généralement de meilleurs avantages, ce qui améliore la satisfaction des employés.
+
+Les corrélations entre les variables financières elles-mêmes sont modérées. Cela indique que chaque indicateur financier mesure un aspect différent de la structure de l'entreprise (croissance, profitabilité, taille).
+
+# **Analyse et discussion des résultats**
+
+## Modélisation principale
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+nasdaq$ln_Market_Cap <- log(nasdaq$Market_Cap)
+
+
+nasdaq$PE_Ratio_W <- Winsorize(nasdaq$PE_Ratio, val = quantile(nasdaq$PE_Ratio, probs = c(0.05, 0.95), na.rm = FALSE))
+
+cat('\n--- Avant Winsorization ---\n')
+summary(nasdaq$PE_Ratio)
+cat('\n--- Après Winsorization ---\n')
+summary(nasdaq$PE_Ratio_W)
+```
+
+##### Commentaire:
+
+Avant le traitement, le ratio P/E présentait une distribution extrêmement asymétrique et volatile. On observe une moyenne de 106,37, bien supérieure à la médiane de 32,27, principalement tirée vers le haut par une valeur maximale aberrante de 3472,64. Un tel écart entre la moyenne et la médiane est le signe distinctif de la présence d'outliers.
+
+Pour stabiliser le modèle, nous avons appliqué une winsorisation aux seuils de 5% et 95%. Les résultats après traitement montrent une nette amélioration de la distribution. La valeur maximale a été ramenée de 3472,64 à 233,40, tandis que la valeur minimale a été relevée de 4,41 à 14,32.
+
+Ce prétraitement est essentiel pour garantir la robustesse de notre régression linéaire multiple et éviter que quelques observations extrêmes ne dictent les coefficients du modèle.
+
+#### - Régression Linéaire Multiple
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+reg <- lm(PE_Ratio_W ~ Glassdoor_Rating + CEO_Approval + Recommend_Friend + Revenue_Growth + Net_Margin + ln_Market_Cap + Founder_CEO_f + Has_Layoff_f, data = nasdaq)
+
+cat('\n--- Résumé du modèle ---\n')
+print(summary(reg))
+```
+
+##### Commentaire:
+
+Le tableau ci-dessus présente les résultats de l'estimation par les Moindres Carrés Ordinaires du ratio P/E winsorisé. La statistique F est de 3,317 avec une p-valeur de 0,00258. Cela indique que le modèle est globalement significatif au seuil de 1% ; au moins une des variables explicatives a un impact réel sur la valorisation des entreprises. Le $R^{2}$ ajusté est de 0,1724, ce qui signifie que notre modèle explique environ 17,2% de la variance du ratio P/E au sein du Nasdaq 100. C'est un score honorable pour des données de coupe transversale en finance.
+
+La variable de la présence d'un PDG fondateur est la seule variable hautement significative avec p-valeur \< 0,01. Son coefficient de 51,138 suggère que, toutes choses égales par ailleurs, les entreprises dirigées par leur fondateur bénéficient d'une prime de valorisation de 51 points de P/E par rapport aux autres. Cela traduit une forte confiance du marché dans la vision à long terme des fondateurs.
+
+La croissance du CA, la marge nette et l'historique de licenciements ne semblent pas influencer de manière significative le ratio P/E dans ce modèle spécifique et aucune des variables de sentiment (Glassdoor_Rating, CEO_Approval, Recommend_Friend) n'est statistiquement significative avec p-valeur \> 0,10.
+
+L'absence de significativité des variables Glassdoor, malgré nos graphiques de corrélation précédents, suggère une forte multicolinéarité. Ces variables étant très corrélées entre elles, elles se neutralisent mutuellement dans la régression multiple, augmentant ainsi les erreurs-types.
+
+## Robustesse des résultats
+
+#### - Test de multicolinéarité
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+# Test VIF
+vif(reg)
+```
+
+##### Commentaire:
+
+Pour valider la fiabilité de nos coefficients, nous avons calculé les VIFs. Ce test permet de mesurer dans quelle mesure la variance d'un coefficient estimé est augmentée à cause de la corrélation entre les variables explicatives.
+
+Les résultats montrent des valeurs VIF relativement élevées pour les indicateurs de sentiment, recommandant l'entreprise à un ami est 5,44 et note globale de l'entreprise est 4,89. Bien que ces valeurs soient proches du seuil critique de 5 ou 10, elles confirment que ces variables sont fortement liées entre elles.
+
+Cette colinéarité explique pourquoi ces variables ne sont pas significatives individuellement dans la régression. Elles apportent une information redondante qui gonfle les erreurs-types, empêchant le modèle de distinguer l'effet spécifique de chaque indicateur de sentiment.
+
+En revanche, les variables telles que Capitalisation boursière, Marge bénéficiaire nette et la présence d'un PDG fondateur présentent des VIF proches de 1. Cela garantit que l'effet significatif observé pour le PDG fondateur est robuste et n'est pas biaisé par des corrélations avec d'autres variables.
+
+Le modèle souffre d'une multicolinéarité modérée concentrée sur les données Glassdoor. Pour optimiser le modèle, une ACP pourrait être envisagée, bien que le modèle actuel reste valide pour l'interprétation des variables structurelles.
+
+#### - Solution : ACP
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+sentiment_data <- nasdaq |> select(Glassdoor_Rating, CEO_Approval, Recommend_Friend)
+
+acp_sent <- PCA(sentiment_data, graph = F)
+
+barplot(acp_sent$eig[,2])
+
+nasdaq$sentiment_index <- acp_sent$ind$coord[,1]
+```
+
+##### Commentaire:
+
+Afin de résoudre le problème de multicolinéarité identifié précédemment, nous avons procédé à une ACP sur les trois indicateurs de sentiment des employés.
+
+Le graphique ci-dessus présente la variance expliquée par chaque composante. On observe que la première composante capture la quasi-totalité de l'information contenue dans les trois variables initiales. Les composantes 2 et 3 sont négligeables.
+
+Cette concentration de l'information sur un seul axe valide la création d'un "Sentiment Index". Ce nouvel indicateur est une combinaison linéaire optimale de la note Glassdoor, de l'approbation du PDG et du taux de recommandation.
+
+En remplaçant les trois variables redondantes par ce seul indice synthétique dans notre régression, nous éliminons mathématiquement la multicolinéarité tout en conservant l'essentiel du pouvoir explicatif des données Glassdoor.
+
+#### - Test de multicolinéarité après ACP
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+reg_acp <- lm(PE_Ratio_W ~ sentiment_index + Revenue_Growth + Net_Margin + ln_Market_Cap + Founder_CEO_f + Has_Layoff_f, data = nasdaq)
+
+cat('\n--- Regréssion après ACP ---\n')
+vif(reg_acp)
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+cat('\n--- Comparer le modèle initial et le modèle après ACP ---\n')
+AIC(reg,reg_acp)
+```
+
+##### Commentaire:
+
+Après l'introduction du sentiment_index, les nouveaux calculs du VIF montrent des valeurs comprises entre 1,07 et 1,50. Toutes les variables se situent désormais bien en dessous du seuil critique de 5. Cela confirme que l'instabilité des coefficients due à la redondance des données Glassdoor a été totalement éliminée.
+
+La comparaison du AIC montre que le modèle après ACP est inférieur au modèle initial. Une valeur AIC plus faible indique un meilleur compromis entre la qualité de l'ajustement et la parcimonie du modèle.
+
+Le modèle après ACP est statistiquement plus performant et plus fiable. Il constitue la base finale de nos conclusions économiques sur la valorisation des entreprises du Nasdaq 100.
+
+#### - Régression Linéaire Multiple avec ACP
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+cat('\n--- Résumé du modèle (Régression Linéaire Multiple) après ACP ---\n')
+print(summary(reg_acp))
+```
+
+##### Commentaire:
+
+Ce tableau présente l'aboutissement de notre modélisation économétrique. En utilisant l'indice de sentiment issu de l'ACP, nous obtenons un modèle plus performant et plus fiable.
+
+Le modèle est hautement significatif avec une p-valeur globale de 0,00076. Le R2 ajusté s'est amélioré pour atteindre 0,1829, ce qui signifie que le modèle explique désormais 18,3% de la variance du ratio P/E, une progression notable par rapport au modèle initial.
+
+La variable de la présence d'un PDG fondateur reste le moteur principal de la valorisation. Avec un coefficient de 52,20 et une significativité au seuil de 1%, le marché accorde une prime de ratio P/E massive aux entreprises dirigées par leur fondateur.
+
+Grâce à l'élimination de la multicolinéarité, l'indice de sentiment devient marginalement significatif au seuil de 10%. On observe un coefficient négatif, suggérant que, dans le secteur technologique du Nasdaq 100, caractérisé par une forte pression et une croissance rapide, les entreprises dont les employés affichent un taux de satisfaction exceptionnellement élevé (perçu comme excessivement confortable) peuvent être considérées par le marché comme manquant d'avantage concurrentiel ou offrant un faible retour sur investissement en matière de R&D. À l'inverse, les entreprises dont les notes sont légèrement inférieures et dont la charge de travail est plus exigeante ont tendance à bénéficier d'une prime de croissance plus élevée dans les évaluations du marché.
+
+La variable de l'historique de licenciements ne montre aucun impact significatif sur le ratio P/E, indiquant que les investisseurs perçoivent les restructurations comme neutres dans le contexte actuel du marché.
+
+Ce modèle optimisé prouve que la structure de gouvernance (fondateur) prime sur le sentiment interne dans la détermination de la valeur boursière, bien que ce dernier apporte une information complémentaire désormais détectable statistiquement.
+
+#### - Test de Normalité
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+qqnorm(residuals(reg_acp), main = "Graphique 7: QQ-Plot des résidus")
+qqline(residuals(reg_acp), col = "red")
+
+cat('\n--- Test de shapiro ---\n')
+print(shapiro.test(residuals(reg_acp)))
+```
+
+##### Commentaire:
+
+Le graphique 7 montre que les points suivent la droite de référence dans la partie centrale, mais s'en écartent de manière significative aux deux extrémités. Ce phénomène indique une distribution dite à leptokurtique, suggérant la présence de résidus extrêmes que le modèle ne parvient pas à expliquer totalement.
+
+Le test de Shapiro-Wilk affiche une statistique W=0,84 avec une p-valeur de 1,969×10−8. Étant donné que cette p-valeur est largement inférieure au seuil de 5%, nous rejetons l'hypothèse nulle de normalité. Les résidus ne suivent donc pas une loi normale.
+
+Bien que l'absence de normalité puisse biaiser les tests d'hypothèses sur de petits échantillons, notre échantillon (n=90) est suffisamment large pour invoquer le Théorème Central Limite. Ainsi, les estimateurs MCO restent sans biais et convergent vers les valeurs réelles, même si une certaine prudence est de mise lors de l'interprétation de la précision des p-valeurs.
+
+#### - Test de Hétéroscédasticité
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+# Test de Breusch-Pagan
+cat('\n--- Test de Breusch-Pagan ---\n')
+print(bptest(reg_acp))
+
+```
+
+##### Commentaire:
+
+La statistique de test est de 17,19 avec une p-valeur de 0,0086. Puisque la p-valeur est inférieure au seuil critique de 5%, nous rejetons l'hypothèse nulle d'homoscédasticité.
+
+Il existe une hétéroscédasticité significative dans les résidus de notre modèle. Cela signifie que la précision de nos prédictions n'est pas uniforme et varie selon les caractéristiques des entreprises.
+
+En présence d'hétéroscédasticité, bien que les coefficients restent sans biais, les erreurs-types peuvent être erronées, ce qui pourrait fausser la lecture de la significativité des variables.
+
+Afin d'identifier précisément quelle variable explicative est à l'origine de cette instabilité de la variance, nous procéderons à un test de Goldfeld-Quandt.
+
+```{r echo=FALSE, include=FALSE, warning=FALSE, message=FALSE}
+test_gq_SI <- gqtest(reg_acp, order.by = ~ sentiment_index, data = nasdaq)
+print(test_gq_SI)
+
+test_gq_RG <- gqtest(reg_acp, order.by = ~ Revenue_Growth, data = nasdaq)
+print(test_gq_RG)
+
+test_gq_NM <- gqtest(reg_acp, order.by = ~ Net_Margin, data = nasdaq)
+print(test_gq_NM)
+
+test_gq_MC <- gqtest(reg_acp, order.by = ~ ln_Market_Cap, data = nasdaq)
+print(test_gq_MC)
+
+test_gq_FC <- gqtest(reg_acp, order.by = ~ Founder_CEO_f, data = nasdaq)
+print(test_gq_FC)
+
+test_gq_HL <- gqtest(reg_acp, order.by = ~ Has_Layoff_f, data = nasdaq)
+print(test_gq_HL)
+
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+
+# Test de Goldfeld-Quandt
+cat("\n--- Test de Goldfeld-Quandt (selon la croissance du chiffre d'affaires) : ---\n")
+print(test_gq_RG)
+
+cat("\n--- Test de Goldfeld-Quandt (selon la présence d'un PDG fondateur) : ---\n")
+print(test_gq_FC)
+
+```
+
+##### Commentaire:
+
+Suite au rejet de l'homoscédasticité par le test de Breusch-Pagan, nous avons effectué des tests de Goldfeld-Quandt pour identifier quelle variable explicative structure la variance des erreurs.
+
+Le test de la variable de croissance est hautement significatif. L'hypothèse nulle est rejetée, indiquant que la variance des résidus augmente avec le taux de croissance du chiffre d'affaires. Les entreprises à forte croissance présentent des erreurs de prédiction beaucoup plus volatiles.
+
+Le test de la variable de la présence d'un PDG fondateur est également significatif. Cela suggère que la structure de l'erreur diffère selon que l'entreprise est dirigée par son fondateur ou non, renforçant l'idée que ces deux types d'entreprises ne suivent pas la même dynamique de valorisation.
+
+Compte tenu de la présence de deux types de variables et du fait que la matrice discrète du vecteur de perturbation est inconnue. Pour obtenir des conclusions fiables, nous sommes impératif d'utiliser des MCQG et d'utiliser regréssion auxiliare afin de corriger les statistiques de Student et avoir le pondération pour MCG.
+
+#### - Solution : Méthode de MCQG
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+# Obtenez les résidus au carré du modèle MCO
+res_sq <- residuals(reg_acp)^2 
+
+#Établir un modèle de régression auxiliaire
+reg_var <- lm(log(res_sq) ~ Revenue_Growth + Founder_CEO_f, data = nasdaq) 
+
+# Calcul des pondération
+# predict() renvoie une valeur ajustée de log(sigma^2), et exp() la rétablit, son inverse donnant les poids.
+nasdaq$poids <- 1 / exp(predict(reg_var))
+
+reg_mcqg <- lm(PE_Ratio_W ~ sentiment_index + Revenue_Growth + Net_Margin + ln_Market_Cap + Founder_CEO_f + Has_Layoff_f, data = nasdaq, weights = poids)
+
+stargazer(reg_acp, reg_mcqg, type = "text", column.labels = c("MCO", "MCQG"), title = "Comparaison de l'estimation MCO et MCQG",dep.var.labels.include = F, model.numbers = F, dep.var.caption="Variable dépendante : 'Ratio P/E'")
+```
+
+##### Commentaire:
+
+Ce tableau présente une comparaison entre l'estimation par les Moindres Carrés Ordinaires (MCO) et les Moindres Carrés Généralisés Quasi-Faisables (MCQG), ces derniers ayant été implémentés pour corriger l'hétéroscédasticité liée à la croissance et à la structure de direction.
+
+L'effet de la présence d'un PDG fondateur demeure le résultat le plus solide de notre étude. Bien que sa significativité baisse, son coefficient augmente de 52,20 à 57,31. Cela confirme que la présence d'un fondateur à la tête de l'entreprise est le principal vecteur d'une prime de valorisation, même après correction de l'instabilité de la variance.
+
+Le sentiment_index qui était marginalement significatif dans le modèle MCO, perd toute significativité statistique dans le modèle MCQG. Cela suggère que l'influence de l'opinion des employés sur la valorisation était potentiellement surestimée ou instable dans le modèle initial.
+
+Le $R^{2}$ ajusté chute drastiquement de 0,183 à 0,032, et la statistique F devient non significative dans le modèle MCQG. Cette perte de pouvoir explicatif indique que la structure de pondération utilisée pour corriger l'hétéroscédasticité a considérablement réduit la variance exploitable par le modèle.
+
+Bien que le modèle MCQG soit théoriquement plus efficace face à l'hétéroscédasticité, les résultats soulignent que la relation entre le sentiment des employés et le ratio P/E est fragile. Le modèle MCO, bien que biaisé dans ses erreurs-types, semble mieux capturer la dynamique transversale du Nasdaq 100.
+
+#### - Autre Solution : Correction de White
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+cov_robuste_hc1 <- hccm(reg_acp, type="hc1")  
+
+reg_robuste_hc1 <- coeftest(reg_acp, vcov = cov_robuste_hc1)
+
+
+stargazer(reg_acp, reg_mcqg, reg_robuste_hc1, title="Comparaison de l'estimation MCO, MCQG et MCO correction WHITE", type="text", digits=3, column.labels=c("MCO","MCQG", "MCOWhite"), dep.var.labels.include = FALSE, model.numbers = FALSE, dep.var.caption="Variable dépendante : 'Ratio P/E'", model.names=FALSE) 
+
+```
+
+##### Commentaire:
+
+Ce tableau récapitulatif compare le modèle MCO, le modèle MCQG et le modèle MCO correction de White.
+
+La correction de White est indispensable ici car elle ajuste les erreurs-types sans modifier les coefficients, garantissant ainsi que notre lecture de la significativité n'est pas faussée par l'hétéroscédasticité.
+
+La variable de la présence d'un PDG fondateur confirme son statut de déterminant majeur. Bien que sa significativité passe de 1% à 5% sous la correction de White, l'effet reste statistiquement solide avec une prime de P/E maintenue à 52,20.
+
+L'indice de sentiment qui apparaissait marginalement significatif à 10% dans le modèle MCO classique, perd sa significativité une fois les erreurs-types corrigées. Cela démontre que l'impact de la satisfaction des employés sur la valorisation est plus incertain qu'il n'y paraissait.
+
+Le modèle MCQG dégrade fortement la qualité globale du modèle ($R^{2}$=0,098 et F-statistic non significatif). La correction de White est donc préférable car elle préserve le pouvoir explicatif du modèle initial ($R^{2}$=0,238) tout en fiabilisant les tests d'hypothèses.
+
+## Analyses complémentaires
+
+#### - Effets croisés de variables
+
+-   Analyse de l'interaction entre la satisfaction des employés et le statut de fondateur.
+
+    ```{r echo=FALSE, warning=FALSE, message=FALSE}
+    # Modèle avec l'effets croisés : sentiment_index * Founder_CEO_f
+    reg_EC <- lm(PE_Ratio_W ~ sentiment_index * Founder_CEO_f + Revenue_Growth + Net_Margin + ln_Market_Cap + Has_Layoff_f, data = nasdaq)
+
+    summary(reg_EC)
+    ```
+
+##### Commentaire:
+
+Pour affiner notre compréhension, nous avons introduit un terme d'effets croisés dans le modèle et les résultats transforment radicalement l'interprétation de l'étude.
+
+Le $R^{2}$ ajusté bondit à 0,2699. Cela démontre que l'effet du sentiment des employés ne peut pas être compris de manière isolée, mais qu'il est conditionné par la structure de direction.
+
+Le terme d'effets croisés est hautement significatif (p-valeur égale à 0,00143) avec un coefficient négatif marqué de -22,48. Pour les entreprises sans fondateur, l'effet du sentiment est quasi nul et non significatif avec un coefficient de 0,95 et p-valeur de 0,80).
+
+Pour les entreprises dirigées par leur fondateur, un score élevé de sentiment des employés semble pénaliser la valorisation relative. Cela suggère que dans les entreprises à forte culture de fondateur, le marché pourrait percevoir un sentiment trop élevé comme un signe de moindre intensité opérationnelle ou d'un manque de "Grind Culture" nécessaire à l'hyper-croissance.
+
+Même avec l'effets croisés, le fait d'avoir un PDG fondateur reste un prédicteur positif massif de la valorisation.
+
+#### - Effets croisés de variables avec correction de White
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+cov_robuste_hc1_EC <- hccm(reg_EC, type="hc1")  
+
+reg_robuste_hc1_EC <- coeftest(reg_EC, vcov = cov_robuste_hc1_EC)
+
+stargazer(reg_EC, reg_robuste_hc1_EC, title="Comparaison de l'estimation MCO avec effet croisés et MCO correction WHITE avec effet croisés ", type="text", digits=3, column.labels=c("MCO avec effet croisés", "MCOWhite avec effet croisés"), dep.var.labels.include = FALSE, model.numbers = FALSE, dep.var.caption="Variable dépendante : 'Ratio P/E'", model.names=FALSE) 
+```
+
+##### Commentaire:
+
+Ce dernier tableau compare le modèle avec effets croisés sous deux estimations, MCO classique et MCO avec correction de White. Ce modèle représente l'aboutissement de notre analyse méthodologique.
+
+Le modèle avec interaction affiche un $R^{2}$ de 0,327, soit 27% de variance expliquée en ajusté, ce qui est le score le plus élevé de toute notre étude. Cela confirme que le ratio P/E est mieux expliquée par la synergie entre la gouvernance et le sentiment des employés que par ces facteurs pris isolément.
+
+Le terme croisé l'indice de sentient et la présence d'un PDG fondateur est hautement significatif dans les deux colonnes, avec un coefficient stable de -22,48. Même après la correction de White, cet effet demeure puissant, cela confirme que le marché réagit différemment au sentiment des employés selon que le dirigeant est un fondateur ou un manager externe.
+
+Pour les entreprises dirigées par des managers professionnels, l'indice de sentiment n'a aucun impact significatif . En revanche, pour les entreprises dirigées par un Fondateur-CEO, une augmentation du sentiment social semble réduire la prime de valorisation liée au fondateur.
+
+La variable de la présence d'un PDG fondateur reste statistiquement significative après correction, avec un impact positif massif de 50,58 sur le ratio P/E.
+
+L'utilisation de la correction de white permet de confirmer que nos découvertes (l'effet fondateur et l'interaction négative) ne sont pas des artefacts dus à l'hétéroscédasticité, mais bien des réalités statistiques du Nasdaq 100.
+
+Conclusion, le sentiment des employés n'est pas un moteur de valeur universel. Il agit comme un modérateur de la 'prime au fondateur', suggérant que les investisseurs pourraient percevoir un sentiment excessivement positif chez les fondateurs comme un signe de gestion moins rigoureuse ou d'investissements excessifs dans la culture d'entreprise au détriment de la rentabilité immédiate.
+
+# **Conclusion générale et perspectives**
+
+Ce mémoire visait à évaluer l'influence du capital humain, mesuré par les indices Glassdoor, sur la valorisation boursière (Ratio P/E) des entreprises du Nasdaq 100. Notre démarche méthodologique a privilégié la rigueur statistique : un traitement des valeurs extrêmes par Winsorisation, une réduction de dimension par ACP pour traiter la colinéarité, et une transition du modèle MCO vers les MCQG suite à la détection d'une hétéroscédasticité significative par les tests de Breusch-Pagan et de Goldfeld-Quandt.
+
+Puis, les résultats finaux infirment l'existence d'un impact direct et universel du sentiment des employés sur la valorisation. Si le modèle MCO initial suggérait une corrélation, la correction des biais de variance montre que cet effet n'est pas statistiquement robuste au niveau global. En revanche, l'analyse des effets croisés révèle que le sentiment agit comme un régulateur de la 'prime au fondateur'. La présence d'un Fondateur-CEO reste le déterminant de valorisation le plus solide, générant une prime moyenne de plus de 50 points de P/E, bien que son impact soit modéré négativement par un climat social excessivement optimiste, interprété par le marché comme un coût d'agence potentiel.
+
+Dans les entreprises de fondateurs, un sentiment extrêmement positif est corrélé à une valorisation plus faible. Cela suggère que le marché valorise une certaine intensité opérationnelle, perçue comme un moteur de croissance au détriment du confort social immédiat.
+
+Des variables telles que les licenciements récents ou la croissance trimestrielle du CA n'ont pas montré d'impact significatif sur le ratio P/E dans cet échantillon spécifique.
+
+En suite, ce travail démontre l'importance de la robustesse économétrique dans l'analyse des données alternatives. En passant d'une analyse de surface à un modèle corrigé, nous avons évité une conclusion erronée sur la causalité du climat social. Scientifiquement, ce mémoire contribue au débat sur la gouvernance en montrant que la perception du capital humain par les investisseurs est indissociable du type de leadership. Pour les investisseurs, ces résultats soulignent que la "culture d'entreprise" capturée par Glassdoor doit être analysée à travers le prisme de la gouvernance. Le "Founder Factor" reste un signal de qualité dominant pour les valeurs de croissance.
+
+L'étude pourrait être approfondie en élargissant l'échantillon au-delà du Nasdaq 100 pour gagner en puissance statistique et vérifier si la "culture de fondateur" est aussi valorisée dans des secteurs plus traditionnels, par exemple intégrer d'autres sources de données (LinkedIn, réseaux sociaux) pour affiner l'indice de sentiment et réduire les biais potentiels liés à une plateforme unique. L'utilisation de données de panel permettrait d'intégrer une dimension temporelle et de capter les chocs exogènes. Enfin, l'inclusion de variables de performance extra-financière plus larges permettrait de mieux situer le rôle du social dans la valorisation.
+
+# Bibliographie - Source des données
+
+-   <https://fr.tradingview.com/symbols/NASDAQ-NDX/>
+
+-   <https://www.glassdoor.fr/Avis/index.htm>
+
+-   <https://www.trueup.io/layoffs>

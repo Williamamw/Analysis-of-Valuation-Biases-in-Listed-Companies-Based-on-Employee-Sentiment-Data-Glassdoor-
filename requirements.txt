@@ -1,0 +1,10 @@
+readxl
+ggplot2
+stargazer
+DescTools
+corrplot
+car
+lmtest
+sandwich
+tidyverse
+FactoMineR

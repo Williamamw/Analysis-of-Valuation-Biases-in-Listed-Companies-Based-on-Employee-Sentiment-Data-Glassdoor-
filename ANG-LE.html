@@ -1,0 +1,1320 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.6.42">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="dcterms.date" content="2025-12-27">
+
+<title>Analyse des Biais de Valorisation des Entreprises Cotées basée sur les Données de Sentiment des Employés (Glassdoor)</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="ANG-LE_files/libs/clipboard/clipboard.min.js"></script>
+<script src="ANG-LE_files/libs/quarto-html/quarto.js"></script>
+<script src="ANG-LE_files/libs/quarto-html/popper.min.js"></script>
+<script src="ANG-LE_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="ANG-LE_files/libs/quarto-html/anchor.min.js"></script>
+<link href="ANG-LE_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="ANG-LE_files/libs/quarto-html/quarto-syntax-highlighting-2f5df379a58b258e96c21c0638c20c03.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="ANG-LE_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="ANG-LE_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="ANG-LE_files/libs/bootstrap/bootstrap-6035e8a48cef719937e4fec156b2ceb4.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="fullcontent">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Analyse des Biais de Valorisation des Entreprises Cotées basée sur les Données de Sentiment des Employés (Glassdoor)</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">December 27, 2025</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p><strong>ANG Ming Wei 22408338, LE Ba Minh 22508769</strong></p>
+<p><a href="https://formations.univ-rennes2.fr/fr/formations/master-37/master-mention-mathematiques-appliquees-statistique-parcours-sciences-des-donnees-intelligence-artificielle-JFTJBMKM.html"><strong>Master 1 MAS - Université Rennes 2</strong></a></p>
+<p>Ce rapport est aider par l’IA generative, en tant qu’étudiants internationaux, bien que nous maîtrisions les concepts économétriques du cours, l’expression écrite académique en français représente parfois un défi pour nous. Par conséquent, nous avons utilisé des outils d’IA générative strictement comme aide à la correction linguistique.</p>
+<p>Ces outils nous ont permis de corriger les erreurs grammaticales et orthographiques, améliorer la syntaxe et la fluidité de nos phrases pour rendre la lecture plus agréable et nous assurer que le vocabulaire technique utilisé était précis et approprié.</p>
+<section id="introduction" class="level1">
+<h1>Introduction</h1>
+<section id="titre-du-projet-analyse-des-biais-de-valorisation-des-entreprises-cotées-basée-sur-les-données-de-sentiment-des-employés-glassdoor" class="level3">
+<h3 class="anchored" data-anchor-id="titre-du-projet-analyse-des-biais-de-valorisation-des-entreprises-cotées-basée-sur-les-données-de-sentiment-des-employés-glassdoor">Titre du Projet : Analyse des Biais de Valorisation des Entreprises Cotées basée sur les Données de Sentiment des Employés (Glassdoor)</h3>
+<section id="contexte-et-problématique" class="level4">
+<h4 class="anchored" data-anchor-id="contexte-et-problématique">- Contexte et problématique</h4>
+<p>Dans l’économie actuelle, dominée par le secteur technologique, la valeur d’une entreprise réside de moins en moins dans ses actifs tangibles (usines, stocks) et de plus en plus dans ses actifs intangibles, en particulier son capital human. Pourtant, les modèles de valorisation financière traditionnels se basent presque exclusivement sur des données comptables rétrospectives (Chiffre d’affaires, Dette, Bénéfice).</p>
+<p>Cela crée une asymétrie d’information : la “santé culturelle” d’une entreprise est souvent invisible dans les bilans. Le défi est donc de quantifier cette variable “soft”. Avec l’essor des plateformes comme Glassdoor, nous avons désormais accès à des données massives sur la satisfaction des employés.</p>
+<p><strong>Problématique :</strong></p>
+<blockquote class="blockquote">
+<p><em>Dans quelle mesure les données alternatives de sentiment des employés permettent-elles d’expliquer les écarts de valorisation boursière (Ratio P/E) des entreprises du Nasdaq 100, au-delà des fondamentaux financiers classiques ?</em></p>
+</blockquote>
+</section>
+<section id="motivation-et-intérêt-du-sujet" class="level4">
+<h4 class="anchored" data-anchor-id="motivation-et-intérêt-du-sujet">- Motivation et intérêt du sujet</h4>
+<p>Nous avons choisi ce sujet pour deux raisons principales :</p>
+<ol type="1">
+<li><p><strong>Les Données Alternatives :</strong> Au lieu de reproduire un modèle financier standard, nous souhaitons explorer l’utilisation de l’alternative date.</p></li>
+<li><p><strong>La Continuité Pédagogique :</strong> Ce travail sur les notes chiffrées constitue la première étape d’une recherche plus large. Il servira de fondation pour nos futurs travaux en M2.</p></li>
+</ol>
+</section>
+<section id="questions-de-recherche-ou-hypothèses" class="level4">
+<h4 class="anchored" data-anchor-id="questions-de-recherche-ou-hypothèses">- Questions de recherche ou hypothèses</h4>
+<p>Nous utilisons le terme ‘Biais de Valorisation’ pour désigner l’écart entre la valeur théorique d’une entreprise basée uniquement sur ses états financiers (croissance trimestrielle du chiffre d’affaires, marge bénéficiaire nette) et sa valeur réelle sur le marché.</p>
+<p>Notre hypothèse est que cet ce biais n’est pas aléatoire, mais qu’il capture des actifs intangibles comme le capital humain. Le sentiment des employés agit donc comme une source de prime ou de décote sur le ratio P/E.</p>
+<p>Dans notre projet, nous testerons de chercher des rélations entre une note globale Glassdoor et la valorisation d’entreprise. Deuxièment, Est-ce que la confiance envers le PDG (CEO_Approval) et la présence d’un fondateur aux commandes (Founder_CEO) agissent comme des catalyseurs de valorisation ? Et même en contrôlant rigoureusement la croissance et la rentabilité (Revenue_Growth, Net_Margin), est-ce que le facteur humain conserve un pouvoir explicatif statistiquement significatif?</p>
+</section>
+<section id="objectifs-et-contributions-du-mémoire" class="level4">
+<h4 class="anchored" data-anchor-id="objectifs-et-contributions-du-mémoire">- Objectifs et contributions du mémoire</h4>
+<p>Dans le domaine de la finance quantitative, le concept d’alpha est omniprésent, et l’on accorde une importance primordiale à la recherche d’un alpha de qualité afin d’optimiser le ratio de Sharpe. Dans ce rapport, nous allons constituer manuellement et via R un jeu de données unique combinant des métriques RH (Sentiment, Recommandation, Licenciements) et des données de marché pour les composants du Nasdaq 100.</p>
+<p>Ensuite, nous tentons d’isoler l’alpha généré par le capital humain à l’aide d’une régression linéaire multiple simple, tout en accordant une attention particulière aux tests de robustesse.</p>
+<p>Nous consiste à démontrer si le marché est “efficient” par rapport à l’information sociale, ou s’il sous-estime systématiquement les entreprises ayant une mauvaise culture interne.</p>
+</section>
+<section id="indiquer-votre-plan" class="level4">
+<h4 class="anchored" data-anchor-id="indiquer-votre-plan">- Indiquer votre plan</h4>
+<p>Notre analyse s’articulera autour des quatre parties suivantes :</p>
+<p><strong>I. Revue de Littérature :</strong></p>
+<p>Synthèse des travaux existants sur le lien entre satisfaction des employés et performance boursière.</p>
+<p><strong>II. Données et Méthodologie :</strong></p>
+<p>Description de l’échantillon (Nasdaq 100) et des sources (Glassdoor, TradingView).</p>
+<p>Définition des variables (6 quantitatives, 2 qualitatives).</p>
+<p>Statistiques descriptives et matrice de corrélation.</p>
+<p><strong>III. Résultats Empiriques :</strong></p>
+<p>Présentation du modèle de régression.</p>
+<p>Interprétation des coefficients et de leur significativité.</p>
+<p>Tests de diagnostic.</p>
+<p><strong>IV. Conclusion :</strong></p>
+<p>Synthèse des rapports, conclusion statistique et notre point de vue.</p>
+</section>
+</section>
+</section>
+<section id="cadre-méthodologique" class="level1">
+<h1>Cadre méthodologique</h1>
+<ul>
+<li><p>Nous utilisons un modèle de régression linéaire multiple estimé par la méthode des Moindres Carrés Ordinaire (MCO). L’objectif est ’expliquer la variation du ratio P/E par des variables opinion des employés et des variables de contrôle financières. <span class="math display">\[
+\begin{aligned}
+PE\_Ratio_i &amp;= \beta_0 + \beta_1 Glassdoor\_Rating_i + \beta_2 CEO\_Approval_i + \beta_3 Rec\_Friend_i \\
+&amp;+ \beta_4 Rev\_Growth_i + \beta_5 Net\_Margin_i + \beta_6 Market\_Cap_i \\
+&amp;+ \beta_7 Founder\_CEO_i + \beta_8 Has\_Layoff_i + \varepsilon_i
+\end{aligned}
+\]</span></p></li>
+<li><p>Nous analysons les entreprises à un instant t précis, car nous cherchons à comparer les valorisations relatives entre entreprise et non leur évolution temporelle.</p></li>
+</ul>
+</section>
+<section id="analyse-des-données" class="level1">
+<h1><strong>Analyse des données</strong></h1>
+<section id="cadre-des-données" class="level2">
+<h2 class="anchored" data-anchor-id="cadre-des-données">Cadre des données</h2>
+<p><em>Période :</em> Les données ont été collectées en novembre 2025</p>
+<p><em>Secteur géographique :</em> Étas-Unis (Marché boursier américain)</p>
+<p><em>Individus :</em> Notre échantillon est composé de 90 entreprises contées appartenant à l’indice Nasdaq 100, représentant pricinpalement le secteur technologique et de croissance.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Code de la série</th>
+<th>Définition</th>
+<th style="text-align: center;">Unité</th>
+<th style="text-align: right;">Source</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">PE_Ratio</td>
+<td>Ratio Cours/Bénéfice</td>
+<td style="text-align: center;">Nombre</td>
+<td style="text-align: right;">TradingView</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Glassdoor_Rating</td>
+<td>Note Globale de l’entreprise par les employés</td>
+<td style="text-align: center;">1 à 5</td>
+<td style="text-align: right;">Glassdoor</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">CEO_Approval</td>
+<td>Taux d’approbation du PDG</td>
+<td style="text-align: center;">(0-1)%</td>
+<td style="text-align: right;">Glassdoor</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Recommend_Friend</td>
+<td>Pourcentage recommandant l’entreprise à un ami</td>
+<td style="text-align: center;">(0-1)%</td>
+<td style="text-align: right;">Glassdoor</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Revenue_Growth</td>
+<td>Croissance trimestrielle du chiffre d’affaires</td>
+<td style="text-align: center;">(0-1)%</td>
+<td style="text-align: right;">Glassdoor</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Net_Margin</td>
+<td>Marge bénéficiaire nette</td>
+<td style="text-align: center;">(0-1)%</td>
+<td style="text-align: right;">TradingView</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Market_Cap</td>
+<td>Capitalisation boursière</td>
+<td style="text-align: center;">Milliard $</td>
+<td style="text-align: right;">TradingView</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Founder_CEO</td>
+<td>Variable muette : 1 si le PDG est fondateur, 0 sinon</td>
+<td style="text-align: center;">Binaire (0/1)</td>
+<td style="text-align: right;">wikipedia / nouvelles</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Has_Layoff</td>
+<td>Variable muette : 1 si licencements récents, 0 sinon</td>
+<td style="text-align: center;">Binaire (0/1)</td>
+<td style="text-align: right;">trueup / nouvelles</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="prétraitement-et-nettoyage-des-données" class="level2">
+<h2 class="anchored" data-anchor-id="prétraitement-et-nettoyage-des-données">Prétraitement et nettoyage des données</h2>
+<p>Ce projet repose sur une base de données propriétaire, construite manuellement par nos soins à partir de plusieurs sources principales : TradingView pour les métriques financières et Glassdoor pour les indicateurs de sentiment social.</p>
+<p>Notre approche de collecte manuelle ciblée sur les composantes du Nasdaq 100 nous a permis d’effectuer un contrôle qualité en amont de l’analyse.</p>
+<p>Au stade de la collecte, nous avons constaté que certaines entreprises n’affichent pas de ratio cours/bénéfice (P/E Ratio). Cela s’explique mathématiquement par un bénéfice par action (EPS) négatif. Lorsqu’une entreprise enregistre des pertes, le ratio P/E n’est pas calculable ou est considéré comme non pertinent. Nous avons identifié deux causes économiques principales à ce phénomène :</p>
+<p><strong>1. La stratégie d’hyper-croissance (Investissements R&amp;D) :</strong> Certaines entreprises, notamment dans les secteurs de la biotechnologie ou des véhicules électriques, investissent massivement en Recherche &amp; Développement pour capturer des parts de marché futures. Leurs dépenses dépassent leurs revenus actuels, entraînant des pertes comptables temporaires.</p>
+<p><strong>2. Les charges de restructuration et coûts exceptionnels :</strong> Des entreprises matures peuvent subir une chute brutale de leur résultat net, le faisant passer en territoire négatif, à cause de charges ponctuelles massives telles que des coûts de licenciement, des fermetures d’usines ou des dépréciations d’actifs (Impairment charges), rendant son ratio P/E soit inexistant, soit artificiellement élevé.</p>
+<ul>
+<li><strong>Exemple : Intel (INTC)</strong>. Récemment, Intel a vu ses bénéfices comptables s’effondrer en raison des coûts liés à son plan de redressement massif (licenciements, construction d’usines), ce qui a entraîné un ratio P/E inhabituellement élevé dans ces circonstances.</li>
+</ul>
+<hr>
+<p>Grâce à ce processus de sélection, notre base de données ne nécessite pas de traitements nettoyage. Nous avons exclu dès la phase de collecte les entreprises pour lesquelles les informations manqauntes et les variables qualitatifs, telles que la présence d’un PDG fondateur (Founder_CEO) ou l’historique de licenciements (Has_Layoffs), ont été directement codées de manière binaire (0 ou 1) lors de la saisie.</p>
+</section>
+<section id="analyse-descriptive-univariée-des-données" class="level2">
+<h2 class="anchored" data-anchor-id="analyse-descriptive-univariée-des-données">Analyse descriptive univariée des données</h2>
+<section id="tableau-de-statistiques-descriptives" class="level4">
+<h4 class="anchored" data-anchor-id="tableau-de-statistiques-descriptives">- Tableau de statistiques descriptives</h4>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Sommaire
+===========================================================================
+Statistic        N   Mean  St. Dev.  Min  Pctl(25) Median Pctl(75)   Max   
+---------------------------------------------------------------------------
+PE_Ratio         90 106.37  390.05  4.41   24.17   32.27   52.38   3,472.64
+Glassdoor_Rating 90  3.81    0.34   2.60    3.62    3.90    4.00     4.50  
+CEO_Approval     90  0.75    0.17   0.28    0.64    0.80    0.87     1.00  
+Recommend_Friend 90  0.70    0.13   0.29    0.63    0.73    0.80     0.91  
+Revenue_Growth   90  0.14    0.16   -0.19   0.06    0.11    0.18     0.80  
+Net_Margin       90  0.15    0.31   -2.52   0.11    0.18    0.25     0.53  
+Market_Cap       90 363.41  869.96   19     49.2    83.5   193.8    4,320  
+Founder_CEO      90  0.18    0.38     0      0       0       0        1    
+Has_Layoff       90  0.23    0.43     0      0       0       0        1    
+---------------------------------------------------------------------------</code></pre>
+</div>
+</div>
+<section id="commentaire" class="level5">
+<h5 class="anchored" data-anchor-id="commentaire">Commentaire :</h5>
+<p>En moyenne, le ratio P/E est d’environ 106, mais la médiane est seulement de 32, ce qui indique une distribution extrêmement asymétrique. Il existe aussi une dispersion très importante puisque le minimum est à 4,41 et le maximum est de 3472,64. Et on observe que 75% des entreprises ont un P/E <span class="math inline">\(\le\)</span> 52.38.</p>
+<p>Concernant la valeur extrême de 3472,64, il s’agit d’un outlier potentiel ou d’une entreprise dont les bénéfices sont très faibles. À l’inverse, le ratio de 4,41 peut indiquer une entreprise sous-évaluée ou ayant réalisé des bénéfices exceptionnels.</p>
+<p>Compte tenu de cette asymétrie et de la présence de ces outliers susceptibles de biaiser la régression linéaire, nous appliquerons la méthode de winsorisation dans la suite de l’analyse pour limiter leur impact.</p>
+<p>Dans notre données, la variable de la présence d’un PDG fondateur et de l’historique de licenciements sont des variables qualitatifs OUI/NON, on a donc que 1 et 0 dans le tableau, et on les transfrome en facteur car elles n’ont pas d’ordre numérique ou d’amplitude intrinsèque.</p>
+<p>Si nous les traitons comme des variables numériques, le modèle de régression imposerait une fausse relation linéaire. L’utilisation du facteur permet à R de créer des variables fictives, donnant à chaque catégorie son propre coefficient indépendant par rapport à une base de référence.</p>
+</section>
+</section>
+<section id="histogramme" class="level4">
+<h4 class="anchored" data-anchor-id="histogramme">- Histogramme</h4>
+<div class="cell">
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="ANG-LE_files/figure-html/unnamed-chunk-7-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<section id="commentaire-1" class="level5">
+<h5 class="anchored" data-anchor-id="commentaire-1">Commentaire:</h5>
+<p>Le graphique 1 illustre la distribution des notes globales est unimodale avec un pic situé autour de 3.9 - 4.0. Cela indique que la majorité des entreprises de notre échantillon sont perçues positivement par leurs employés et nous observons une variabilité suffisante pour notre modèle, avec des notes s’étendant d’environ 2.5 à 4.5.</p>
+</section>
+</section>
+<section id="box-plot" class="level4">
+<h4 class="anchored" data-anchor-id="box-plot">- Box plot</h4>
+<div class="cell">
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="ANG-LE_files/figure-html/unnamed-chunk-8-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<section id="commentaire-2" class="level5">
+<h5 class="anchored" data-anchor-id="commentaire-2">Commentaire:</h5>
+<p>Le graphique 2 présente la médiane se situe aux alentours de 0.80. Cela confirme que la majorité des PDG du Nasdaq 100 bénéficient d’un fort soutien de leurs employés.</p>
+<p>La boîte est relativement compacte, s’étendant d’environ 0.62 à 0.85. Cela indique une homogénéité dans les entreprises performantes, il est rare d’avoir un PDG impopulaire dans le Nasdaq 100.</p>
+<p>Nous observons un point isolé en bas du graphique situé vers 0.30. Ce point représente une anomalie et correspond à la l’entreprise American Electric Power. Il s’agit d’une entreprise où le PDG est extrêmement impopulaire par rapport à ses pairs. C’est un cas intéressant pour notre modèle : cette impopularité se traduit-elle par une pénalité sur le cours de bourse ?</p>
+<div class="cell">
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="ANG-LE_files/figure-html/unnamed-chunk-9-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="commentaire-3" class="level5">
+<h5 class="anchored" data-anchor-id="commentaire-3">Commentaire:</h5>
+<p>Le graphique 3 met en évidence une asymétrie majeure dans la taille des entreprises de notre échantillon. La boîte est écrasée vers le bas de l’axe, tandis que les valeurs aberrantes (points rouges) s’étendent verticalement jusqu’à des niveaux extrêmes.</p>
+<p>Les points rouges représentent les géants de la technologie (comme Nvidia, Apple, Alphabet, etc) dont la capitalisation est sans commune mesure avec la médiane du reste de l’échantillon.</p>
+<p>Une telle distribution pose problème pour une régression linéaire standard, car ces valeurs extrêmes risquent de biaiser les coefficients. Cette observation justifie notre choix méthodologique de transformer cette variable en logarithme naturel (<span class="math inline">\(ln\)</span><span class="math inline">\((\)</span>Market_Cap<span class="math inline">\()\)</span>) pour normaliser la distribution et réduire l’impact des effets d’échelle.</p>
+</section>
+</section>
+</section>
+<section id="analyse-descriptive-bivariée-des-données" class="level2">
+<h2 class="anchored" data-anchor-id="analyse-descriptive-bivariée-des-données">Analyse descriptive bivariée des données</h2>
+<div class="cell">
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="ANG-LE_files/figure-html/unnamed-chunk-10-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<section id="commentaire-4" class="level5">
+<h5 class="anchored" data-anchor-id="commentaire-4">Commentaire:</h5>
+<p>Le graphique 4 révèle des corrélations contre-intuitives. Par exemple, la marge nette montrent une corrélation négative avec le ratio P/E, ce qui contredit la théorie financière standard, les entreprises plus rentables devraient logiquement avoir une valorisation plus élevée.</p>
+<p>De plus, les corrélations globales sont très faibles. Ce phénomène s’explique par la sensibilité extrême du coefficient de corrélation de Pearson aux outliers. Comme identifié dans notre analyse descriptive précédente, la présence d’entreprises avec un ratio P/E aberrant “écrase” la relation linéaire pour le reste de l’échantillon.</p>
+<p>Les données brutes ne sont pas fiables pour une régression linéaire. Pour corriger ce biais et obtenir des résultats robustes, il est indispensable d’appliquer une méthode de Winsorisation sur le ratio P/E avant de procéder à la modélisation économétrique.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="ANG-LE_files/figure-html/unnamed-chunk-11-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="commentaire-5" class="level5">
+<h5 class="anchored" data-anchor-id="commentaire-5">Commentaire:</h5>
+<p>Le graphique 5 montre que la droite de régression présente ici une pente positive.</p>
+<p>Cela suggère qu’une satisfaction élevée des employés est corrélée à une dynamique de croissance plus forte. Ce résultat valide l’hypothèse selon laquelle un climat social sain favorise la productivité et, par extension, l’expansion de l’activité.</p>
+<p>On observe une dispersion des points autour de la droite, ce qui indique que si le moral des employés est un facteur contributif, la croissance reste influencée par des variables macroéconomiques et sectorielles externes. La zone grisée (intervalle de confiance) est relativement étroite, ce qui renforce la crédibilité de cette tendance positive pour l’échantillon du Nasdaq 100.</p>
+</section>
+<section id="section" class="level4">
+<h4 class="anchored" data-anchor-id="section"></h4>
+<div class="cell">
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="ANG-LE_files/figure-html/unnamed-chunk-12-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<section id="commentaire-6" class="level5">
+<h5 class="anchored" data-anchor-id="commentaire-6">Commentaire:</h5>
+<p>Dans le graphique 6, l’élément le plus frappant est la corrélation extrêmement élevée entre les trois variables de sentiment : Pourcentage recommandant l’entreprise à un ami et Note Globale de l’entreprise (0,87), Pourcentage recommandant l’entreprise à un ami et Taux d’approbation du PDG (0,83), Note Globale de l’entreprise et Taux d’approbation du PDG (0,79). Ces scores indiquent que ces variables capturent une dimension quasi identique du capital humain. L’inclusion simultanée de ces variables dans un même modèle présente un risque majeur de multicolinéarité, ce qui pourrait gonfler les variances des estimateurs et rendre les coefficients peu fiables.</p>
+<p>Faible corrélation entre sentiment et performance financière, les coefficients entre les indicateurs Glassdoor et les variables financières (Revenue_Growth, Net_Margin, Market_Cap) sont relativement faibles, s’échelonnant entre 0,05 et 0,31. Parmi ceux-ci, la corrélation entre la marge nette et les indicateurs de sentiment est légèrement supérieure à celle observée pour la croissance du chiffre d’affaires ou la capitalisation boursière. Cela pourrait suggérer que les entreprises très rentables offrent généralement de meilleurs avantages, ce qui améliore la satisfaction des employés.</p>
+<p>Les corrélations entre les variables financières elles-mêmes sont modérées. Cela indique que chaque indicateur financier mesure un aspect différent de la structure de l’entreprise (croissance, profitabilité, taille).</p>
+</section>
+</section>
+</section>
+</section>
+<section id="analyse-et-discussion-des-résultats" class="level1">
+<h1><strong>Analyse et discussion des résultats</strong></h1>
+<section id="modélisation-principale" class="level2">
+<h2 class="anchored" data-anchor-id="modélisation-principale">Modélisation principale</h2>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>
+--- Avant Winsorization ---</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+   4.41   24.17   32.27  106.37   52.38 3472.64 </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+--- Après Winsorization ---</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+  14.32   24.17   32.27   52.92   52.38  233.40 </code></pre>
+</div>
+</div>
+<section id="commentaire-7" class="level5">
+<h5 class="anchored" data-anchor-id="commentaire-7">Commentaire:</h5>
+<p>Avant le traitement, le ratio P/E présentait une distribution extrêmement asymétrique et volatile. On observe une moyenne de 106,37, bien supérieure à la médiane de 32,27, principalement tirée vers le haut par une valeur maximale aberrante de 3472,64. Un tel écart entre la moyenne et la médiane est le signe distinctif de la présence d’outliers.</p>
+<p>Pour stabiliser le modèle, nous avons appliqué une winsorisation aux seuils de 5% et 95%. Les résultats après traitement montrent une nette amélioration de la distribution. La valeur maximale a été ramenée de 3472,64 à 233,40, tandis que la valeur minimale a été relevée de 4,41 à 14,32.</p>
+<p>Ce prétraitement est essentiel pour garantir la robustesse de notre régression linéaire multiple et éviter que quelques observations extrêmes ne dictent les coefficients du modèle.</p>
+</section>
+<section id="régression-linéaire-multiple" class="level4">
+<h4 class="anchored" data-anchor-id="régression-linéaire-multiple">- Régression Linéaire Multiple</h4>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>
+--- Résumé du modèle ---</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:
+lm(formula = PE_Ratio_W ~ Glassdoor_Rating + CEO_Approval + Recommend_Friend + 
+    Revenue_Growth + Net_Margin + ln_Market_Cap + Founder_CEO_f + 
+    Has_Layoff_f, data = nasdaq)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-87.090 -21.513  -7.986   5.936 181.863 
+
+Coefficients:
+                 Estimate Std. Error t value Pr(&gt;|t|)   
+(Intercept)        33.673     79.909   0.421  0.67459   
+Glassdoor_Rating   20.752     34.270   0.606  0.54651   
+CEO_Approval      -22.049     59.533  -0.370  0.71207   
+Recommend_Friend -104.642     93.456  -1.120  0.26615   
+Revenue_Growth     35.570     39.140   0.909  0.36615   
+Net_Margin         -4.697     18.188  -0.258  0.79686   
+ln_Market_Cap       3.514      4.800   0.732  0.46627   
+Founder_CEO_f1     51.138     16.128   3.171  0.00215 **
+Has_Layoff_f1      -0.899     12.871  -0.070  0.94449   
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 49.17 on 81 degrees of freedom
+Multiple R-squared:  0.2467,    Adjusted R-squared:  0.1724 
+F-statistic: 3.317 on 8 and 81 DF,  p-value: 0.002501</code></pre>
+</div>
+</div>
+<section id="commentaire-8" class="level5">
+<h5 class="anchored" data-anchor-id="commentaire-8">Commentaire:</h5>
+<p>Le tableau ci-dessus présente les résultats de l’estimation par les Moindres Carrés Ordinaires du ratio P/E winsorisé. La statistique F est de 3,317 avec une p-valeur de 0,00258. Cela indique que le modèle est globalement significatif au seuil de 1% ; au moins une des variables explicatives a un impact réel sur la valorisation des entreprises. Le <span class="math inline">\(R^{2}\)</span> ajusté est de 0,1724, ce qui signifie que notre modèle explique environ 17,2% de la variance du ratio P/E au sein du Nasdaq 100. C’est un score honorable pour des données de coupe transversale en finance.</p>
+<p>La variable de la présence d’un PDG fondateur est la seule variable hautement significative avec p-valeur &lt; 0,01. Son coefficient de 51,138 suggère que, toutes choses égales par ailleurs, les entreprises dirigées par leur fondateur bénéficient d’une prime de valorisation de 51 points de P/E par rapport aux autres. Cela traduit une forte confiance du marché dans la vision à long terme des fondateurs.</p>
+<p>La croissance du CA, la marge nette et l’historique de licenciements ne semblent pas influencer de manière significative le ratio P/E dans ce modèle spécifique et aucune des variables de sentiment (Glassdoor_Rating, CEO_Approval, Recommend_Friend) n’est statistiquement significative avec p-valeur &gt; 0,10.</p>
+<p>L’absence de significativité des variables Glassdoor, malgré nos graphiques de corrélation précédents, suggère une forte multicolinéarité. Ces variables étant très corrélées entre elles, elles se neutralisent mutuellement dans la régression multiple, augmentant ainsi les erreurs-types.</p>
+</section>
+</section>
+</section>
+<section id="robustesse-des-résultats" class="level2">
+<h2 class="anchored" data-anchor-id="robustesse-des-résultats">Robustesse des résultats</h2>
+<section id="test-de-multicolinéarité" class="level4">
+<h4 class="anchored" data-anchor-id="test-de-multicolinéarité">- Test de multicolinéarité</h4>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>Glassdoor_Rating     CEO_Approval Recommend_Friend   Revenue_Growth 
+        4.888568         3.624779         5.443397         1.513614 
+      Net_Margin    ln_Market_Cap    Founder_CEO_f     Has_Layoff_f 
+        1.177905         1.321294         1.415365         1.103205 </code></pre>
+</div>
+</div>
+<section id="commentaire-9" class="level5">
+<h5 class="anchored" data-anchor-id="commentaire-9">Commentaire:</h5>
+<p>Pour valider la fiabilité de nos coefficients, nous avons calculé les VIFs. Ce test permet de mesurer dans quelle mesure la variance d’un coefficient estimé est augmentée à cause de la corrélation entre les variables explicatives.</p>
+<p>Les résultats montrent des valeurs VIF relativement élevées pour les indicateurs de sentiment, recommandant l’entreprise à un ami est 5,44 et note globale de l’entreprise est 4,89. Bien que ces valeurs soient proches du seuil critique de 5 ou 10, elles confirment que ces variables sont fortement liées entre elles.</p>
+<p>Cette colinéarité explique pourquoi ces variables ne sont pas significatives individuellement dans la régression. Elles apportent une information redondante qui gonfle les erreurs-types, empêchant le modèle de distinguer l’effet spécifique de chaque indicateur de sentiment.</p>
+<p>En revanche, les variables telles que Capitalisation boursière, Marge bénéficiaire nette et la présence d’un PDG fondateur présentent des VIF proches de 1. Cela garantit que l’effet significatif observé pour le PDG fondateur est robuste et n’est pas biaisé par des corrélations avec d’autres variables.</p>
+<p>Le modèle souffre d’une multicolinéarité modérée concentrée sur les données Glassdoor. Pour optimiser le modèle, une ACP pourrait être envisagée, bien que le modèle actuel reste valide pour l’interprétation des variables structurelles.</p>
+</section>
+</section>
+<section id="solution-acp" class="level4">
+<h4 class="anchored" data-anchor-id="solution-acp">- Solution : ACP</h4>
+<div class="cell">
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="ANG-LE_files/figure-html/unnamed-chunk-16-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<section id="commentaire-10" class="level5">
+<h5 class="anchored" data-anchor-id="commentaire-10">Commentaire:</h5>
+<p>Afin de résoudre le problème de multicolinéarité identifié précédemment, nous avons procédé à une ACP sur les trois indicateurs de sentiment des employés.</p>
+<p>Le graphique ci-dessus présente la variance expliquée par chaque composante. On observe que la première composante capture la quasi-totalité de l’information contenue dans les trois variables initiales. Les composantes 2 et 3 sont négligeables.</p>
+<p>Cette concentration de l’information sur un seul axe valide la création d’un “Sentiment Index”. Ce nouvel indicateur est une combinaison linéaire optimale de la note Glassdoor, de l’approbation du PDG et du taux de recommandation.</p>
+<p>En remplaçant les trois variables redondantes par ce seul indice synthétique dans notre régression, nous éliminons mathématiquement la multicolinéarité tout en conservant l’essentiel du pouvoir explicatif des données Glassdoor.</p>
+</section>
+</section>
+<section id="test-de-multicolinéarité-après-acp" class="level4">
+<h4 class="anchored" data-anchor-id="test-de-multicolinéarité-après-acp">- Test de multicolinéarité après ACP</h4>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>
+--- Regréssion après ACP ---</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>sentiment_index  Revenue_Growth      Net_Margin   ln_Market_Cap   Founder_CEO_f 
+       1.182164        1.504475        1.172012        1.223562        1.403310 
+   Has_Layoff_f 
+       1.077873 </code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>
+--- Comparer le modèle initial et le modèle après ACP ---</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>        df      AIC
+reg     10 967.0836
+reg_acp  8 964.1254</code></pre>
+</div>
+</div>
+<section id="commentaire-11" class="level5">
+<h5 class="anchored" data-anchor-id="commentaire-11">Commentaire:</h5>
+<p>Après l’introduction du sentiment_index, les nouveaux calculs du VIF montrent des valeurs comprises entre 1,07 et 1,50. Toutes les variables se situent désormais bien en dessous du seuil critique de 5. Cela confirme que l’instabilité des coefficients due à la redondance des données Glassdoor a été totalement éliminée.</p>
+<p>La comparaison du AIC montre que le modèle après ACP est inférieur au modèle initial. Une valeur AIC plus faible indique un meilleur compromis entre la qualité de l’ajustement et la parcimonie du modèle.</p>
+<p>Le modèle après ACP est statistiquement plus performant et plus fiable. Il constitue la base finale de nos conclusions économiques sur la valorisation des entreprises du Nasdaq 100.</p>
+</section>
+</section>
+<section id="régression-linéaire-multiple-avec-acp" class="level4">
+<h4 class="anchored" data-anchor-id="régression-linéaire-multiple-avec-acp">- Régression Linéaire Multiple avec ACP</h4>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>
+--- Résumé du modèle (Régression Linéaire Multiple) après ACP ---</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:
+lm(formula = PE_Ratio_W ~ sentiment_index + Revenue_Growth + 
+    Net_Margin + ln_Market_Cap + Founder_CEO_f + Has_Layoff_f, 
+    data = nasdaq)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-89.407 -20.631  -7.835   4.897 183.490 
+
+Coefficients:
+                Estimate Std. Error t value Pr(&gt;|t|)   
+(Intercept)      19.0990    20.8592   0.916  0.36252   
+sentiment_index  -6.0574     3.4351  -1.763  0.08151 . 
+Revenue_Growth   35.0789    38.7725   0.905  0.36822   
+Net_Margin       -4.9924    18.0266  -0.277  0.78251   
+ln_Market_Cap     4.2313     4.5896   0.922  0.35924   
+Founder_CEO_f1   52.2006    15.9571   3.271  0.00156 **
+Has_Layoff_f1     0.6662    12.6416   0.053  0.95810   
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 48.86 on 83 degrees of freedom
+Multiple R-squared:  0.238, Adjusted R-squared:  0.1829 
+F-statistic:  4.32 on 6 and 83 DF,  p-value: 0.0007685</code></pre>
+</div>
+</div>
+<section id="commentaire-12" class="level5">
+<h5 class="anchored" data-anchor-id="commentaire-12">Commentaire:</h5>
+<p>Ce tableau présente l’aboutissement de notre modélisation économétrique. En utilisant l’indice de sentiment issu de l’ACP, nous obtenons un modèle plus performant et plus fiable.</p>
+<p>Le modèle est hautement significatif avec une p-valeur globale de 0,00076. Le R2 ajusté s’est amélioré pour atteindre 0,1829, ce qui signifie que le modèle explique désormais 18,3% de la variance du ratio P/E, une progression notable par rapport au modèle initial.</p>
+<p>La variable de la présence d’un PDG fondateur reste le moteur principal de la valorisation. Avec un coefficient de 52,20 et une significativité au seuil de 1%, le marché accorde une prime de ratio P/E massive aux entreprises dirigées par leur fondateur.</p>
+<p>Grâce à l’élimination de la multicolinéarité, l’indice de sentiment devient marginalement significatif au seuil de 10%. On observe un coefficient négatif, suggérant que, dans le secteur technologique du Nasdaq 100, caractérisé par une forte pression et une croissance rapide, les entreprises dont les employés affichent un taux de satisfaction exceptionnellement élevé (perçu comme excessivement confortable) peuvent être considérées par le marché comme manquant d’avantage concurrentiel ou offrant un faible retour sur investissement en matière de R&amp;D. À l’inverse, les entreprises dont les notes sont légèrement inférieures et dont la charge de travail est plus exigeante ont tendance à bénéficier d’une prime de croissance plus élevée dans les évaluations du marché.</p>
+<p>La variable de l’historique de licenciements ne montre aucun impact significatif sur le ratio P/E, indiquant que les investisseurs perçoivent les restructurations comme neutres dans le contexte actuel du marché.</p>
+<p>Ce modèle optimisé prouve que la structure de gouvernance (fondateur) prime sur le sentiment interne dans la détermination de la valeur boursière, bien que ce dernier apporte une information complémentaire désormais détectable statistiquement.</p>
+</section>
+</section>
+<section id="test-de-normalité" class="level4">
+<h4 class="anchored" data-anchor-id="test-de-normalité">- Test de Normalité</h4>
+<div class="cell">
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="ANG-LE_files/figure-html/unnamed-chunk-20-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+--- Test de shapiro ---</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+    Shapiro-Wilk normality test
+
+data:  residuals(reg_acp)
+W = 0.84041, p-value = 1.969e-08</code></pre>
+</div>
+</div>
+<section id="commentaire-13" class="level5">
+<h5 class="anchored" data-anchor-id="commentaire-13">Commentaire:</h5>
+<p>Le graphique 7 montre que les points suivent la droite de référence dans la partie centrale, mais s’en écartent de manière significative aux deux extrémités. Ce phénomène indique une distribution dite à leptokurtique, suggérant la présence de résidus extrêmes que le modèle ne parvient pas à expliquer totalement.</p>
+<p>Le test de Shapiro-Wilk affiche une statistique W=0,84 avec une p-valeur de 1,969×10−8. Étant donné que cette p-valeur est largement inférieure au seuil de 5%, nous rejetons l’hypothèse nulle de normalité. Les résidus ne suivent donc pas une loi normale.</p>
+<p>Bien que l’absence de normalité puisse biaiser les tests d’hypothèses sur de petits échantillons, notre échantillon (n=90) est suffisamment large pour invoquer le Théorème Central Limite. Ainsi, les estimateurs MCO restent sans biais et convergent vers les valeurs réelles, même si une certaine prudence est de mise lors de l’interprétation de la précision des p-valeurs.</p>
+</section>
+</section>
+<section id="test-de-hétéroscédasticité" class="level4">
+<h4 class="anchored" data-anchor-id="test-de-hétéroscédasticité">- Test de Hétéroscédasticité</h4>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>
+--- Test de Breusch-Pagan ---</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+    studentized Breusch-Pagan test
+
+data:  reg_acp
+BP = 17.19, df = 6, p-value = 0.008609</code></pre>
+</div>
+</div>
+<section id="commentaire-14" class="level5">
+<h5 class="anchored" data-anchor-id="commentaire-14">Commentaire:</h5>
+<p>La statistique de test est de 17,19 avec une p-valeur de 0,0086. Puisque la p-valeur est inférieure au seuil critique de 5%, nous rejetons l’hypothèse nulle d’homoscédasticité.</p>
+<p>Il existe une hétéroscédasticité significative dans les résidus de notre modèle. Cela signifie que la précision de nos prédictions n’est pas uniforme et varie selon les caractéristiques des entreprises.</p>
+<p>En présence d’hétéroscédasticité, bien que les coefficients restent sans biais, les erreurs-types peuvent être erronées, ce qui pourrait fausser la lecture de la significativité des variables.</p>
+<p>Afin d’identifier précisément quelle variable explicative est à l’origine de cette instabilité de la variance, nous procéderons à un test de Goldfeld-Quandt.</p>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>
+--- Test de Goldfeld-Quandt (selon la croissance du chiffre d'affaires) : ---</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+    Goldfeld-Quandt test
+
+data:  reg_acp
+GQ = 2.2988, df1 = 38, df2 = 38, p-value = 0.005975
+alternative hypothesis: variance increases from segment 1 to 2</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+--- Test de Goldfeld-Quandt (selon la présence d'un PDG fondateur) : ---</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+    Goldfeld-Quandt test
+
+data:  reg_acp
+GQ = 2.1447, df1 = 38, df2 = 38, p-value = 0.01047
+alternative hypothesis: variance increases from segment 1 to 2</code></pre>
+</div>
+</div>
+</section>
+<section id="commentaire-15" class="level5">
+<h5 class="anchored" data-anchor-id="commentaire-15">Commentaire:</h5>
+<p>Suite au rejet de l’homoscédasticité par le test de Breusch-Pagan, nous avons effectué des tests de Goldfeld-Quandt pour identifier quelle variable explicative structure la variance des erreurs.</p>
+<p>Le test de la variable de croissance est hautement significatif. L’hypothèse nulle est rejetée, indiquant que la variance des résidus augmente avec le taux de croissance du chiffre d’affaires. Les entreprises à forte croissance présentent des erreurs de prédiction beaucoup plus volatiles.</p>
+<p>Le test de la variable de la présence d’un PDG fondateur est également significatif. Cela suggère que la structure de l’erreur diffère selon que l’entreprise est dirigée par son fondateur ou non, renforçant l’idée que ces deux types d’entreprises ne suivent pas la même dynamique de valorisation.</p>
+<p>Compte tenu de la présence de deux types de variables et du fait que la matrice discrète du vecteur de perturbation est inconnue. Pour obtenir des conclusions fiables, nous sommes impératif d’utiliser des MCQG et d’utiliser regréssion auxiliare afin de corriger les statistiques de Student et avoir le pondération pour MCG.</p>
+</section>
+</section>
+<section id="solution-méthode-de-mcqg" class="level4">
+<h4 class="anchored" data-anchor-id="solution-méthode-de-mcqg">- Solution : Méthode de MCQG</h4>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Comparaison de l'estimation MCO et MCQG
+================================================================
+                              Variable dépendante : 'Ratio P/E' 
+                              ----------------------------------
+                                     MCO              MCQG      
+----------------------------------------------------------------
+sentiment_index                    -6.057*           -1.070     
+                                   (3.435)          (2.884)     
+                                                                
+Revenue_Growth                     35.079            29.566     
+                                  (38.773)          (39.050)    
+                                                                
+Net_Margin                         -4.992           -11.078     
+                                  (18.027)          (13.030)    
+                                                                
+ln_Market_Cap                       4.231            3.668      
+                                   (4.590)          (3.794)     
+                                                                
+Founder_CEO_f1                    52.201***         57.315*     
+                                  (15.957)          (32.841)    
+                                                                
+Has_Layoff_f1                       0.666            12.563     
+                                  (12.642)          (9.343)     
+                                                                
+Constant                           19.099            19.824     
+                                  (20.859)          (16.932)    
+                                                                
+----------------------------------------------------------------
+Observations                         90                90       
+R2                                  0.238            0.098      
+Adjusted R2                         0.183            0.032      
+Residual Std. Error (df = 83)      48.858            2.691      
+F Statistic (df = 6; 83)          4.320***           1.498      
+================================================================
+Note:                                *p&lt;0.1; **p&lt;0.05; ***p&lt;0.01</code></pre>
+</div>
+</div>
+<section id="commentaire-16" class="level5">
+<h5 class="anchored" data-anchor-id="commentaire-16">Commentaire:</h5>
+<p>Ce tableau présente une comparaison entre l’estimation par les Moindres Carrés Ordinaires (MCO) et les Moindres Carrés Généralisés Quasi-Faisables (MCQG), ces derniers ayant été implémentés pour corriger l’hétéroscédasticité liée à la croissance et à la structure de direction.</p>
+<p>L’effet de la présence d’un PDG fondateur demeure le résultat le plus solide de notre étude. Bien que sa significativité baisse, son coefficient augmente de 52,20 à 57,31. Cela confirme que la présence d’un fondateur à la tête de l’entreprise est le principal vecteur d’une prime de valorisation, même après correction de l’instabilité de la variance.</p>
+<p>Le sentiment_index qui était marginalement significatif dans le modèle MCO, perd toute significativité statistique dans le modèle MCQG. Cela suggère que l’influence de l’opinion des employés sur la valorisation était potentiellement surestimée ou instable dans le modèle initial.</p>
+<p>Le <span class="math inline">\(R^{2}\)</span> ajusté chute drastiquement de 0,183 à 0,032, et la statistique F devient non significative dans le modèle MCQG. Cette perte de pouvoir explicatif indique que la structure de pondération utilisée pour corriger l’hétéroscédasticité a considérablement réduit la variance exploitable par le modèle.</p>
+<p>Bien que le modèle MCQG soit théoriquement plus efficace face à l’hétéroscédasticité, les résultats soulignent que la relation entre le sentiment des employés et le ratio P/E est fragile. Le modèle MCO, bien que biaisé dans ses erreurs-types, semble mieux capturer la dynamique transversale du Nasdaq 100.</p>
+</section>
+</section>
+<section id="autre-solution-correction-de-white" class="level4">
+<h4 class="anchored" data-anchor-id="autre-solution-correction-de-white">- Autre Solution : Correction de White</h4>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Comparaison de l'estimation MCO, MCQG et MCO correction WHITE
+=================================================================
+                               Variable dépendante : 'Ratio P/E' 
+                              -----------------------------------
+                                  MCO         MCQG      MCOWhite 
+-----------------------------------------------------------------
+sentiment_index                 -6.057*      -1.070      -6.057  
+                                (3.435)      (2.884)    (4.304)  
+                                                                 
+Revenue_Growth                   35.079      29.566      35.079  
+                                (38.773)    (39.050)    (47.476) 
+                                                                 
+Net_Margin                       -4.992      -11.078     -4.992  
+                                (18.027)    (13.030)    (25.916) 
+                                                                 
+ln_Market_Cap                    4.231        3.668      4.231   
+                                (4.590)      (3.794)    (4.836)  
+                                                                 
+Founder_CEO_f1                 52.201***     57.315*    52.201** 
+                                (15.957)    (32.841)    (23.217) 
+                                                                 
+Has_Layoff_f1                    0.666       12.563      0.666   
+                                (12.642)     (9.343)    (12.732) 
+                                                                 
+Constant                         19.099      19.824      19.099  
+                                (20.859)    (16.932)    (21.162) 
+                                                                 
+-----------------------------------------------------------------
+Observations                       90          90                
+R2                               0.238        0.098              
+Adjusted R2                      0.183        0.032              
+Residual Std. Error (df = 83)    48.858       2.691              
+F Statistic (df = 6; 83)        4.320***      1.498              
+=================================================================
+Note:                                 *p&lt;0.1; **p&lt;0.05; ***p&lt;0.01</code></pre>
+</div>
+</div>
+<section id="commentaire-17" class="level5">
+<h5 class="anchored" data-anchor-id="commentaire-17">Commentaire:</h5>
+<p>Ce tableau récapitulatif compare le modèle MCO, le modèle MCQG et le modèle MCO correction de White.</p>
+<p>La correction de White est indispensable ici car elle ajuste les erreurs-types sans modifier les coefficients, garantissant ainsi que notre lecture de la significativité n’est pas faussée par l’hétéroscédasticité.</p>
+<p>La variable de la présence d’un PDG fondateur confirme son statut de déterminant majeur. Bien que sa significativité passe de 1% à 5% sous la correction de White, l’effet reste statistiquement solide avec une prime de P/E maintenue à 52,20.</p>
+<p>L’indice de sentiment qui apparaissait marginalement significatif à 10% dans le modèle MCO classique, perd sa significativité une fois les erreurs-types corrigées. Cela démontre que l’impact de la satisfaction des employés sur la valorisation est plus incertain qu’il n’y paraissait.</p>
+<p>Le modèle MCQG dégrade fortement la qualité globale du modèle (<span class="math inline">\(R^{2}\)</span>=0,098 et F-statistic non significatif). La correction de White est donc préférable car elle préserve le pouvoir explicatif du modèle initial (<span class="math inline">\(R^{2}\)</span>=0,238) tout en fiabilisant les tests d’hypothèses.</p>
+</section>
+</section>
+</section>
+<section id="analyses-complémentaires" class="level2">
+<h2 class="anchored" data-anchor-id="analyses-complémentaires">Analyses complémentaires</h2>
+<section id="effets-croisés-de-variables" class="level4">
+<h4 class="anchored" data-anchor-id="effets-croisés-de-variables">- Effets croisés de variables</h4>
+<ul>
+<li><p>Analyse de l’interaction entre la satisfaction des employés et le statut de fondateur.</p>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:
+lm(formula = PE_Ratio_W ~ sentiment_index * Founder_CEO_f + Revenue_Growth + 
+    Net_Margin + ln_Market_Cap + Has_Layoff_f, data = nasdaq)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-98.854 -19.940 -10.800   0.055 186.857 
+
+Coefficients:
+                               Estimate Std. Error t value Pr(&gt;|t|)   
+(Intercept)                     25.5039    19.8129   1.287  0.20163   
+sentiment_index                  0.9541     3.8805   0.246  0.80640   
+Founder_CEO_f1                  50.5848    15.0917   3.352  0.00122 **
+Revenue_Growth                  33.1653    36.6551   0.905  0.36822   
+Net_Margin                     -14.1430    17.2642  -0.819  0.41504   
+ln_Market_Cap                    3.1416     4.3510   0.722  0.47231   
+Has_Layoff_f1                   -0.2870    11.9532  -0.024  0.98090   
+sentiment_index:Founder_CEO_f1 -22.4800     6.8123  -3.300  0.00143 **
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 46.18 on 82 degrees of freedom
+Multiple R-squared:  0.3273,    Adjusted R-squared:  0.2699 
+F-statistic:   5.7 on 7 and 82 DF,  p-value: 2.173e-05</code></pre>
+</div>
+</div></li>
+</ul>
+<section id="commentaire-18" class="level5">
+<h5 class="anchored" data-anchor-id="commentaire-18">Commentaire:</h5>
+<p>Pour affiner notre compréhension, nous avons introduit un terme d’effets croisés dans le modèle et les résultats transforment radicalement l’interprétation de l’étude.</p>
+<p>Le <span class="math inline">\(R^{2}\)</span> ajusté bondit à 0,2699. Cela démontre que l’effet du sentiment des employés ne peut pas être compris de manière isolée, mais qu’il est conditionné par la structure de direction.</p>
+<p>Le terme d’effets croisés est hautement significatif (p-valeur égale à 0,00143) avec un coefficient négatif marqué de -22,48. Pour les entreprises sans fondateur, l’effet du sentiment est quasi nul et non significatif avec un coefficient de 0,95 et p-valeur de 0,80).</p>
+<p>Pour les entreprises dirigées par leur fondateur, un score élevé de sentiment des employés semble pénaliser la valorisation relative. Cela suggère que dans les entreprises à forte culture de fondateur, le marché pourrait percevoir un sentiment trop élevé comme un signe de moindre intensité opérationnelle ou d’un manque de “Grind Culture” nécessaire à l’hyper-croissance.</p>
+<p>Même avec l’effets croisés, le fait d’avoir un PDG fondateur reste un prédicteur positif massif de la valorisation.</p>
+</section>
+</section>
+<section id="effets-croisés-de-variables-avec-correction-de-white" class="level4">
+<h4 class="anchored" data-anchor-id="effets-croisés-de-variables-avec-correction-de-white">- Effets croisés de variables avec correction de White</h4>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Comparaison de l'estimation MCO avec effet croisés et MCO correction WHITE avec effet croisés
+=================================================================================
+                                       Variable dépendante : 'Ratio P/E'         
+                               --------------------------------------------------
+                               MCO avec effet croisés MCOWhite avec effet croisés
+---------------------------------------------------------------------------------
+sentiment_index                        0.954                     0.954           
+                                      (3.880)                   (2.937)          
+                                                                                 
+Founder_CEO_f1                       50.585***                 50.585**          
+                                      (15.092)                 (22.485)          
+                                                                                 
+Revenue_Growth                         33.165                   33.165           
+                                      (36.655)                 (43.506)          
+                                                                                 
+Net_Margin                            -14.143                   -14.143          
+                                      (17.264)                 (24.265)          
+                                                                                 
+ln_Market_Cap                          3.142                     3.142           
+                                      (4.351)                   (4.390)          
+                                                                                 
+Has_Layoff_f1                          -0.287                   -0.287           
+                                      (11.953)                 (13.135)          
+                                                                                 
+sentiment_index:Founder_CEO_f1       -22.480***               -22.480***         
+                                      (6.812)                   (6.684)          
+                                                                                 
+Constant                               25.504                   25.504           
+                                      (19.813)                 (18.741)          
+                                                                                 
+---------------------------------------------------------------------------------
+Observations                             90                                      
+R2                                     0.327                                     
+Adjusted R2                            0.270                                     
+Residual Std. Error               46.184 (df = 82)                               
+F Statistic                    5.700*** (df = 7; 82)                             
+=================================================================================
+Note:                                                 *p&lt;0.1; **p&lt;0.05; ***p&lt;0.01</code></pre>
+</div>
+</div>
+<section id="commentaire-19" class="level5">
+<h5 class="anchored" data-anchor-id="commentaire-19">Commentaire:</h5>
+<p>Ce dernier tableau compare le modèle avec effets croisés sous deux estimations, MCO classique et MCO avec correction de White. Ce modèle représente l’aboutissement de notre analyse méthodologique.</p>
+<p>Le modèle avec interaction affiche un <span class="math inline">\(R^{2}\)</span> de 0,327, soit 27% de variance expliquée en ajusté, ce qui est le score le plus élevé de toute notre étude. Cela confirme que le ratio P/E est mieux expliquée par la synergie entre la gouvernance et le sentiment des employés que par ces facteurs pris isolément.</p>
+<p>Le terme croisé l’indice de sentient et la présence d’un PDG fondateur est hautement significatif dans les deux colonnes, avec un coefficient stable de -22,48. Même après la correction de White, cet effet demeure puissant, cela confirme que le marché réagit différemment au sentiment des employés selon que le dirigeant est un fondateur ou un manager externe.</p>
+<p>Pour les entreprises dirigées par des managers professionnels, l’indice de sentiment n’a aucun impact significatif . En revanche, pour les entreprises dirigées par un Fondateur-CEO, une augmentation du sentiment social semble réduire la prime de valorisation liée au fondateur.</p>
+<p>La variable de la présence d’un PDG fondateur reste statistiquement significative après correction, avec un impact positif massif de 50,58 sur le ratio P/E.</p>
+<p>L’utilisation de la correction de white permet de confirmer que nos découvertes (l’effet fondateur et l’interaction négative) ne sont pas des artefacts dus à l’hétéroscédasticité, mais bien des réalités statistiques du Nasdaq 100.</p>
+<p>Conclusion, le sentiment des employés n’est pas un moteur de valeur universel. Il agit comme un modérateur de la ‘prime au fondateur’, suggérant que les investisseurs pourraient percevoir un sentiment excessivement positif chez les fondateurs comme un signe de gestion moins rigoureuse ou d’investissements excessifs dans la culture d’entreprise au détriment de la rentabilité immédiate.</p>
+</section>
+</section>
+</section>
+</section>
+<section id="conclusion-générale-et-perspectives" class="level1">
+<h1><strong>Conclusion générale et perspectives</strong></h1>
+<p>Ce mémoire visait à évaluer l’influence du capital humain, mesuré par les indices Glassdoor, sur la valorisation boursière (Ratio P/E) des entreprises du Nasdaq 100. Notre démarche méthodologique a privilégié la rigueur statistique : un traitement des valeurs extrêmes par Winsorisation, une réduction de dimension par ACP pour traiter la colinéarité, et une transition du modèle MCO vers les MCQG suite à la détection d’une hétéroscédasticité significative par les tests de Breusch-Pagan et de Goldfeld-Quandt.</p>
+<p>Puis, les résultats finaux infirment l’existence d’un impact direct et universel du sentiment des employés sur la valorisation. Si le modèle MCO initial suggérait une corrélation, la correction des biais de variance montre que cet effet n’est pas statistiquement robuste au niveau global. En revanche, l’analyse des effets croisés révèle que le sentiment agit comme un régulateur de la ‘prime au fondateur’. La présence d’un Fondateur-CEO reste le déterminant de valorisation le plus solide, générant une prime moyenne de plus de 50 points de P/E, bien que son impact soit modéré négativement par un climat social excessivement optimiste, interprété par le marché comme un coût d’agence potentiel.</p>
+<p>Dans les entreprises de fondateurs, un sentiment extrêmement positif est corrélé à une valorisation plus faible. Cela suggère que le marché valorise une certaine intensité opérationnelle, perçue comme un moteur de croissance au détriment du confort social immédiat.</p>
+<p>Des variables telles que les licenciements récents ou la croissance trimestrielle du CA n’ont pas montré d’impact significatif sur le ratio P/E dans cet échantillon spécifique.</p>
+<p>En suite, ce travail démontre l’importance de la robustesse économétrique dans l’analyse des données alternatives. En passant d’une analyse de surface à un modèle corrigé, nous avons évité une conclusion erronée sur la causalité du climat social. Scientifiquement, ce mémoire contribue au débat sur la gouvernance en montrant que la perception du capital humain par les investisseurs est indissociable du type de leadership. Pour les investisseurs, ces résultats soulignent que la “culture d’entreprise” capturée par Glassdoor doit être analysée à travers le prisme de la gouvernance. Le “Founder Factor” reste un signal de qualité dominant pour les valeurs de croissance.</p>
+<p>L’étude pourrait être approfondie en élargissant l’échantillon au-delà du Nasdaq 100 pour gagner en puissance statistique et vérifier si la “culture de fondateur” est aussi valorisée dans des secteurs plus traditionnels, par exemple intégrer d’autres sources de données (LinkedIn, réseaux sociaux) pour affiner l’indice de sentiment et réduire les biais potentiels liés à une plateforme unique. L’utilisation de données de panel permettrait d’intégrer une dimension temporelle et de capter les chocs exogènes. Enfin, l’inclusion de variables de performance extra-financière plus larges permettrait de mieux situer le rôle du social dans la valorisation.</p>
+</section>
+<section id="bibliographie---source-des-données" class="level1">
+<h1>Bibliographie - Source des données</h1>
+<ul>
+<li><p><a href="https://fr.tradingview.com/symbols/NASDAQ-NDX/" class="uri">https://fr.tradingview.com/symbols/NASDAQ-NDX/</a></p></li>
+<li><p><a href="https://www.glassdoor.fr/Avis/index.htm" class="uri">https://www.glassdoor.fr/Avis/index.htm</a></p></li>
+<li><p><a href="https://www.trueup.io/layoffs" class="uri">https://www.trueup.io/layoffs</a></p></li>
+</ul>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const onCopySuccess = function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  }
+  const getTextToCopy = function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+    text: getTextToCopy
+  });
+  clipboard.on('success', onCopySuccess);
+  if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+    const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+      text: getTextToCopy,
+      container: window.document.getElementById('quarto-embedded-source-code-modal')
+    });
+    clipboardModal.on('success', onCopySuccess);
+  }
+    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+    var mailtoRegex = new RegExp(/^mailto:/);
+      var filterRegex = new RegExp('/' + window.location.host + '/');
+    var isInternal = (href) => {
+        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+    }
+    // Inspect non-navigation links and adorn them if external
+ 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+    for (var i=0; i<links.length; i++) {
+      const link = links[i];
+      if (!isInternal(link.href)) {
+        // undo the damage that might have been done by quarto-nav.js in the case of
+        // links that we want to consider external
+        if (link.dataset.originalHref !== undefined) {
+          link.href = link.dataset.originalHref;
+        }
+      }
+    }
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      if (note) {
+        return note.innerHTML;
+      } else {
+        return "";
+      }
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
